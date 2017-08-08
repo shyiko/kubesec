@@ -1,0 +1,6 @@
+package: github.com/shyiko/kubesec
+import:
+- package: github.com/spf13/cobra
+- package: github.com/spf13/pflag
+- package: gopkg.in/yaml.v2
+- package: github.com/Sirupsen/logrus

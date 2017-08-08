@@ -1,0 +1,20 @@
+hash: f27c8a076f6401671f4839051dcccd5fa8f4c2e75d206854eac90cf5153283ff
+updated: 2017-08-07T14:44:56.800977036-07:00
+imports:
+- name: github.com/go-errors/errors
+  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/Sirupsen/logrus
+  version: a3f95b5c423586578a4e099b11a46c2479628cac
+- name: github.com/spf13/cobra
+  version: c678ff029ee250b65714e518f4f5c5cb934955de
+- name: github.com/spf13/pflag
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: golang.org/x/sys
+  version: afce3de5756ca82699128ebae46ac95ad59d6297
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+testImports: []
