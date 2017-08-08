@@ -1,4 +1,4 @@
-# kubesec ![Latest Version](https://img.shields.io/badge/latest-WIP-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/jabba)
+# kubesec ![Latest Version](https://img.shields.io/badge/latest-WIP-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
 
 Secure secret management for Kubernetes.
   
