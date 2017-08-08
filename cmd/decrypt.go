@@ -64,7 +64,7 @@ func reconstructEncryptionContext(resource []byte, decryptSymmetricKey bool) (*E
 					for _, secretKey := range secretKeys {
 						if secretKey.Fingerprint == key.Fingerprint {
 							var err error
-							ctx.SymmetricKey, err = gpg.Decrypt(key.EncryptedSymmetricKey)
+							ctx.SymmetricKey, err = gpg.DecryptAndVerify(key.EncryptedSymmetricKey)
 							if err != nil {
 								return nil, err
 							}

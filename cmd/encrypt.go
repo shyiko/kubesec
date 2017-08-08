@@ -153,7 +153,7 @@ func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, e
 	sort.Sort(ctx.Keys)
 	for _, pgp := range ctx.Keys {
 		if pgp.EncryptedSymmetricKey == nil {
-			encryptedSymmetricKey, err := gpg.Encrypt(ctx.SymmetricKey, pgp.Fingerprint)
+			encryptedSymmetricKey, err := gpg.EncryptAndSign(ctx.SymmetricKey, pgp.Fingerprint)
 			if err != nil {
 				return nil, err
 			}

@@ -6,10 +6,17 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
 )
+
+/*
+func init() {
+	log.SetLevel(log.DebugLevel)
+}
+*/
 
 type KeyCapability int
 type KeyCapabilities []KeyCapability
@@ -213,13 +220,13 @@ func ListKeys() ([]Key, error) {
 	return parseKeys(out)
 }
 
-func Encrypt(data []byte, recipient string) ([]byte, error) {
+func EncryptAndSign(data []byte, recipient string) ([]byte, error) {
 	return pipeThroughGPG(data,
-		"-a", "-e", "-r", recipient, "--trusted-key", recipient[len(recipient)-16:])
+		"--sign", "-a", "-e", "-r", recipient, "--trusted-key", recipient[len(recipient)-16:])
 }
 
-func Decrypt(data []byte) ([]byte, error) {
-	return pipeThroughGPG(data, "-d")
+func DecryptAndVerify(data []byte) ([]byte, error) {
+	return pipeThroughGPG(data, "-d", "--status-fd", "3")
 }
 
 func pipeThroughGPG(content []byte, args ...string) ([]byte, error) {
@@ -239,12 +246,37 @@ func pipeThroughGPG(content []byte, args ...string) ([]byte, error) {
 
 func executeInShell(command ...string) error {
 	cmd := buildCommand(command)
+	var verifySignature bool
+	for _, c := range command {
+		if c == "--status-fd" {
+			verifySignature = true
+			break
+		}
+	}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stderr
 	if log.GetLevel() == log.DebugLevel {
 		cmd.Stderr = os.Stderr
 	}
-	return cmd.Run()
+	if verifySignature {
+		r, w, err := os.Pipe()
+		if err != nil {
+			return err
+		}
+		cmd.ExtraFiles = []*os.File{w}
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		w.Close()
+		status, err := ioutil.ReadAll(r)
+		match := regexp.MustCompile("VALIDSIG ([0-9A-F]+)").FindSubmatch(status)
+		if match == nil {
+			return errors.New("Signature is invalid or missing")
+		}
+		return cmd.Wait()
+	} else {
+		return cmd.Run()
+	}
 }
 
 func executeInShellAndGrabOutput(command ...string) ([]byte, error) {
