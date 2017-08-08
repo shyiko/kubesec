@@ -49,7 +49,9 @@ Download binary from the "[release(s)](https://github.com/shyiko/kubesec/release
 
 ## Usage
 
-> [gpg](https://gnupg.org/) (tested on 2.1+) **must** be available on the PATH.  
+> [gpg](https://gnupg.org/) (tested: 2.0+; recommended: 2.1+) **must** be available on the PATH.   
+It's also highly recommended to set up [gpg-agent](https://wiki.archlinux.org/index.php/GnuPG#gpg-agent) to avoid 
+constant passphrase re-entry.    
 
 ```sh
 # encrypt a Secret
@@ -101,6 +103,9 @@ $ kubesec encode secret.yml
 > Dockerfile [is included within this repo](kubesec-playground.dockerfile).
 
 ## Example(s)
+ 
+If you don't have a valid PGP key, see [GitHub Help - Generating a new GPG key](https://help.github.com/articles/generating-a-new-gpg-key/#platform-linux) on 
+how to generate one. 
  
 #### #1 (basic)
 
