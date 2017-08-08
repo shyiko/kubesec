@@ -120,7 +120,7 @@ You are free to choose a different one (e.g. [helm-template](https://github.com/
 Let's say we have the following (click to expand):
 
 <details>
-  <summary>`<project_dir>/k8s/template.yml`</summary>
+  <summary>&lt;project_dir&gt;/k8s/template.yml</summary>
   
 ```yml
 # snippet:k8s/template.yml
@@ -180,7 +180,7 @@ parameters:
 
 </details>
 <details>
-  <summary>`<project_dir>/k8s/template.secret.yml`</summary>
+  <summary>&lt;project_dir&gt;/k8s/template.secret.yml</summary>
   
 ```yml
 # snippet:k8s/template.secret.yml
@@ -219,8 +219,8 @@ parameters:
 
 </details>
 <details>
-  <summary>`<project_dir>/k8s/deployment/minikube.yml` (context-specific configuration; you'll probably have other files like 
-           `<project_dir>/k8s/deployment/gke.yml`, `<project_dir>/k8s/deployment/gke-staging.yml`, etc)</summary>
+  <summary>&lt;project_dir&gt;/k8s/deployment/minikube.yml (context-specific configuration; you'll probably have other files like 
+           &lt;project_dir&gt;/k8s/deployment/gke.yml, &lt;project_dir&gt;/k8s/deployment/gke-staging.yml, etc)</summary>
            
 ```yml
 # snippet:k8s/deployment/minikube.yml
