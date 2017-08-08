@@ -16,7 +16,6 @@ var version string
 
 func init() {
 	log.SetFormatter(&simpleFormatter{})
-	// todo: make it configurable through the command line
 	log.SetLevel(log.InfoLevel)
 }
 
@@ -36,6 +35,11 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:  "kubesec",
 		Long: "Secure secret management for Kubernetes (https://github.com/shyiko/kubesec).",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if debug, _ := cmd.Flags().GetBool("debug"); debug {
+				log.SetLevel(log.DebugLevel)
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
 				fmt.Println(version)
@@ -148,6 +152,7 @@ func main() {
 	walk(rootCmd, func(cmd *cobra.Command) {
 		cmd.Flags().BoolP("help", "h", false, "Print usage")
 	})
+	rootCmd.PersistentFlags().Bool("debug", false, "Turn on debug output")
 	rootCmd.Flags().Bool("version", false, "Print version information")
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(-1)

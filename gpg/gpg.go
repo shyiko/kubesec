@@ -2,8 +2,8 @@ package gpg
 
 import (
 	"errors"
+	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -241,7 +241,9 @@ func executeInShell(command ...string) error {
 	cmd := buildCommand(command)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stderr
-	cmd.Stderr = os.Stderr
+	if log.GetLevel() == log.DebugLevel {
+		cmd.Stderr = os.Stderr
+	}
 	return cmd.Run()
 }
 
@@ -261,5 +263,6 @@ func buildCommand(command []string) *exec.Cmd {
 	} else {
 		execArg = []string{"sh", "-c"}
 	}
+	log.Debugf(`Executing %s %s "%s"`, execArg[0], execArg[1], strings.Join(command, " "))
 	return exec.Command(execArg[0], execArg[1], strings.Join(command, " "))
 }
