@@ -13,6 +13,7 @@ import (
 )
 
 const NS string = "# kubesec:"
+const blockSize int = 48
 
 type Key struct {
 	Fingerprint           string
@@ -85,6 +86,10 @@ func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
 	cipher := aes.Cipher{}
 	data := rs.data()
 	for key, value := range data {
+		mod := len(value)%blockSize
+		if mod != 0 {
+			value += strings.Repeat("\u0000", blockSize-mod)
+		}
 		if encryptedValue, err := cipher.Encrypt(value, ctx.SymmetricKey, key, ctx.Stash[key]); err != nil {
 			return nil, err
 		} else {

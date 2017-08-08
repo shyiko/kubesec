@@ -24,6 +24,10 @@ func Decrypt(resource []byte) ([]byte, *EncryptionContext, error) {
 		cipher := aes.Cipher{}
 		for key, value := range data {
 			if decryptedValue, stash, err := cipher.Decrypt(value, ctx.SymmetricKey, key); err == nil {
+				padding := strings.Index(decryptedValue, "\u0000")
+				if padding != -1 {
+					decryptedValue = decryptedValue[:padding]
+				}
 				data[key] = decryptedValue
 				ctx.Stash[key] = stash
 			} else {

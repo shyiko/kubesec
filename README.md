@@ -288,8 +288,8 @@ ktmpl k8s/template.yml -f k8s/deployment/minikube.yml -p IMAGE debian:jessie | k
 ## Encryption Protocol
 
 - "data" values are encrypted with AES-GCM 
-(each value is padded to a block-size (32 bytes by default) and then encrypted using a shared (resource-unique, randomly generated) 256-bit DEK & a 96-bit random IV).
-- DEK is encrypted with public PGP `--key`(s) & signed with private PGP key (from the same set) before being stored in a Secret as `# kubesec:pgp:...`.
+(each value is padded to a block-size (48 bytes by default) and then encrypted using a shared (resource-unique, randomly generated) 256-bit DEK & a 96-bit random IV).
+- DEK is encrypted with public PGP `--key`(s) & signed with private PGP key before being stored in a Secret as `# kubesec:pgp:...`.
 
 ## Reporting Security Issues
 
