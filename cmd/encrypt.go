@@ -86,7 +86,7 @@ func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
 	cipher := aes.Cipher{}
 	data := rs.data()
 	for key, value := range data {
-		mod := len(value)%blockSize
+		mod := len(value) % blockSize
 		if mod != 0 {
 			value += strings.Repeat("\u0000", blockSize-mod)
 		}
