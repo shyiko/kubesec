@@ -104,7 +104,7 @@ $ kubesec encode secret.yml
  
 #### #1 (basic)
 
-```yml
+```sh
 echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"app-stable-0"},"type":"Opaque",
   "data":{"KEY":"dmFsdWUK","ANOTHER_KEY":"YW5vdGhlcl92YWx1ZQo="}}' | 
   kubesec encrypt > secret.yml
@@ -121,6 +121,7 @@ Let's say we have the following (click to expand):
 
 <details>
   <summary>`<project_dir>/k8s/template.yml`</summary>
+  
 ```yml
 # snippet:k8s/template.yml
 apiVersion: v1
@@ -176,9 +177,11 @@ parameters:
   required: true
   parameterType: string
 ```
+
 </details>
 <details>
   <summary>`<project_dir>/k8s/template.secret.yml`</summary>
+  
 ```yml
 # snippet:k8s/template.secret.yml
 apiVersion: v1
@@ -213,15 +216,18 @@ parameters:
   required: true
   parameterType: string
 ```
+
 </details>
 <details>
   <summary>`<project_dir>/k8s/deployment/minikube.yml` (context-specific configuration; you'll probably have other files like 
            `<project_dir>/k8s/deployment/gke.yml`, `<project_dir>/k8s/deployment/gke-staging.yml`, etc)</summary>
+           
 ```yml
 # snippet:k8s/deployment/minikube.yml
 NAME: myapp
 SECRET_REF: "0"
 ```
+
 </details>
 
 > BTW, all these files (+ `ktmpl`) are included in `shyiko/kubesec-playground` docker image [#playground](#playground).
