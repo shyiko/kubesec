@@ -56,7 +56,7 @@ func main() {
 		RunE: makeRunE(func(resource []byte) ([]byte, error) {
 			var keysToAdd []string
 			var keysToRemove []string
-			changeType := 2
+			changeType := 0
 			for _, key := range keys {
 				if key == "" {
 					continue
