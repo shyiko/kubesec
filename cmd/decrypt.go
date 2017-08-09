@@ -48,11 +48,18 @@ func reconstructEncryptionContext(resource []byte, decryptSymmetricKey bool) (*E
 	for i, line := range strings.Split(string(resource), "\n") {
 		if strings.HasPrefix(line, NS) {
 			split := strings.Split(line[len(NS):], ":")
-			if len(split) < 3 {
+			if len(split) < 2 {
 				return nil, errors.New(fmt.Sprintf("Unexpected value (line %v)", i+1))
 			}
 			switch split[0] {
+			case "v":
+				if split[1] != "1" {
+					return nil, errors.New(fmt.Sprintf("Unexpected version (%v)", split[1]))
+				}
 			case "pgp":
+				if len(split) != 3 {
+					return nil, errors.New(fmt.Sprintf("Unexpected value (line %v)", i+1))
+				}
 				fingerprint, escapedEncryptedSymmetricKey := split[1], split[2]
 				encryptedSymmetricKey, err := base64.StdEncoding.DecodeString(escapedEncryptedSymmetricKey)
 				if err != nil {

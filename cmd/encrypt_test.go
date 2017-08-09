@@ -91,6 +91,7 @@ func TestEncryptKeyAdd(t *testing.T) {
 	fps := []string{primaryKey.Fingerprint, anotherFP}
 	sort.Strings(fps)
 	expected := "data:\n  key: ANYTHING\nkind: Secret\n" + strings.Join([]string{
+		"# kubesec:v:1",
 		"# kubesec:pgp:" + fps[0] + ":ANYTHING",
 		"# kubesec:pgp:" + fps[1] + ":ANYTHING",
 	}, "\n") + "\n"

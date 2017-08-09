@@ -140,7 +140,7 @@ func main() {
 		&cobra.Command{
 			Use:   "introspect [file]",
 			Short: "Show information about the Secret (who has access to the \"data\", etc)",
-			RunE:  makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
+			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 				return kubesec.Introspect(resource)
 			}),
 			Example: "  kubesec introspect secret.yml\n" +

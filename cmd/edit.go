@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
@@ -9,7 +10,6 @@ import (
 	"os/exec"
 	"strings"
 	"unicode"
-	"encoding/base64"
 )
 
 func Edit(content []byte, cleartext bool) ([]byte, error) {

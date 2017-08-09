@@ -62,7 +62,7 @@ func (ctx *EncryptionContext) RotateSymmetricKey() {
 }
 
 func IsEncrypted(resource []byte) bool {
-	return strings.Index(string(resource), "\n"+NS+"pgp:") != -1 // todo: check for date
+	return strings.Index(string(resource), "\n"+NS+"v:") != -1
 }
 
 func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
@@ -149,7 +149,7 @@ func marshal(rs resource) ([]byte, error) {
 }
 
 func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, error) {
-	var footer []string
+	footer := []string{NS + "v:1\n"}
 	sort.Sort(ctx.Keys)
 	for _, pgp := range ctx.Keys {
 		if pgp.EncryptedSymmetricKey == nil {
@@ -160,7 +160,6 @@ func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, e
 			pgp.EncryptedSymmetricKey = encryptedSymmetricKey
 		}
 		escapedEncryptedSymmetricKey := base64.StdEncoding.EncodeToString(pgp.EncryptedSymmetricKey)
-		//escapedEncryptedSymmetricKey, _ := json.Marshal(string(pgp.EncryptedSymmetricKey))
 		footer = append(footer, NS+"pgp:"+pgp.Fingerprint+":"+string(escapedEncryptedSymmetricKey)+"\n")
 	}
 	body, err := yaml.Marshal(rs)
