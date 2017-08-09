@@ -38,7 +38,7 @@ curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.0/kubesec-0.1.
 # verify PGP signature (optional but RECOMMENDED)
 curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.0/kubesec-0.1.0-$(
     bash -c '[ $OSTYPE = darwin* ] && echo darwin || echo linux'
-  ).asc > kubesec.asc
+  )-amd64.asc > kubesec.asc
 curl https://keybase.io/shyiko/pgp_keys.asc | gpg --import
 gpg --verify kubesec.asc
 ```  
@@ -93,8 +93,8 @@ If you have `docker` installed you don't need to download `kubesec` binary just 
 Instead, launch a container and start playing: 
 
 ```sh
-docker run -it --rm shyiko/kubesec-playground:latest /bin/bash
-$ kubesec encode secret.yml
+docker run -it --rm shyiko/kubesec-playground:0.1.0 /bin/bash
+$ kubesec encrypt secret.yml
 ```
 
 > `shyiko/kubesec-playground` image contains `gpg` 2.1+, kubesec, vim (as a default $EDITOR) and 
@@ -110,7 +110,7 @@ how to generate one.
 #### #1 (basic)
 
 ```sh
-echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"app-stable-0"},"type":"Opaque",
+echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"myapp-stable-0"},"type":"Opaque",
   "data":{"KEY":"dmFsdWUK","ANOTHER_KEY":"YW5vdGhlcl92YWx1ZQo="}}' | 
   kubesec encrypt > secret.yml
 kubesec edit -i secret.yml  
