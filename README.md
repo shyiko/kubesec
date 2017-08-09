@@ -78,6 +78,7 @@ cat secret.yml | kubesec encrypt -
 kubesec decrypt secret.yml 
 
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
+# (append --cleartext if you wish to edit actual values and not base64-encoded form)  
 kubesec edit -i secret.yml
 
 # show information about the Secret (who has access to the "data", last modification date, etc)
@@ -113,7 +114,7 @@ how to generate one.
 echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"myapp-stable-0"},"type":"Opaque",
   "data":{"KEY":"dmFsdWUK","ANOTHER_KEY":"YW5vdGhlcl92YWx1ZQo="}}' | 
   kubesec encrypt > secret.yml
-kubesec edit -i secret.yml  
+kubesec edit -i --cleartext secret.yml 
 kubesec decrypt secret.yml | kubectl apply -f - 
 ```
 
@@ -234,7 +235,7 @@ SECRET_REF: "0"
 ```
 
 </details>
-
+<p><p>
 
 > BTW, all these files (+ `ktmpl`) are included in `shyiko/kubesec-playground` docker image [#playground](#playground).
 
@@ -244,7 +245,7 @@ Let's start by creating a `Secret` and deploying an app.
 # create Secret
 ktmpl k8s/template.secret.yml -f k8s/deployment/minikube.yml | 
   kubesec encrypt -o k8s/deployment/minikube.secret.yml
-kubesec edit -i k8s/deployment/minikube.secret.yml
+kubesec edit -i --cleartext k8s/deployment/minikube.secret.yml
 kubesec decrypt k8s/deployment/minikube.secret.yml | kubectl apply -f -
 
 # deploy app
@@ -284,7 +285,7 @@ yaml w -i k8s/deployment/minikube.yml \
 # update Secret
 ktmpl k8s/template.secret.yml -f k8s/deployment/minikube.yml |
   kubesec merge k8s/deployment/minikube.secret.yml - -o k8s/deployment/minikube.secret.yml 
-kubesec edit -i k8s/deployment/minikube.secret.yml # if needed
+kubesec edit -i --cleartext k8s/deployment/minikube.secret.yml # if needed
 kubesec decrypt k8s/deployment/minikube.secret.yml | kubectl apply -f -
 
 # re-deploy app
