@@ -77,7 +77,7 @@ func reconstructEncryptionContext(resource []byte, decryptSymmetricKey bool) (*E
 		}
 	}
 	if decryptSymmetricKey && ctx.SymmetricKey == nil {
-		return nil, errors.New("Encryption key not found")
+		return nil, errors.New("PGP key required to decrypt the data wasn't found")
 	}
 	return &ctx, nil
 }

@@ -146,3 +146,17 @@ func TestEncryptKeyRemove(t *testing.T) {
 		}
 	}
 }
+
+func TestEncryptWithMissingKey(t *testing.T) {
+	if _, err := Encrypt([]byte(`{"kind": "Secret"}`), EncryptionContext{
+		Keys: Keys{Key{Fingerprint: "B90F6449FEBC20F00DB13ED8212659B22565CA8"}},
+	}); err == nil {
+		t.Fail()
+	} else {
+		actual := err.Error()
+		expected := "Failed to encrypt/sign DEK with PGP key B90F6449FEBC20F00DB13ED8212659B22565CA8 (add --debug CLI flag to find out why)"
+		if actual != expected {
+			t.Fatalf("actual: %#v != expected: %#v", actual, expected)
+		}
+	}
+}

@@ -221,12 +221,28 @@ func ListKeys() ([]Key, error) {
 }
 
 func EncryptAndSign(data []byte, recipient string) ([]byte, error) {
-	return pipeThroughGPG(data,
+	out, err := pipeThroughGPG(data,
 		"--sign", "-a", "-e", "-r", recipient, "--trusted-key", recipient[len(recipient)-16:])
+	if _, ok := err.(*exec.ExitError); ok {
+		hint := ""
+		if log.GetLevel() != log.DebugLevel {
+			hint = " (add --debug CLI flag to find out why)"
+		}
+		err = errors.New("Failed to encrypt/sign DEK with PGP key " + recipient + hint)
+	}
+	return out, err
 }
 
 func DecryptAndVerify(data []byte) ([]byte, error) {
-	return pipeThroughGPG(data, "-d", "--status-fd", "3")
+	out, err := pipeThroughGPG(data, "-d", "--status-fd", "3")
+	if _, ok := err.(*exec.ExitError); ok {
+		hint := ""
+		if log.GetLevel() != log.DebugLevel {
+			hint = " (add --debug CLI flag to find out why)"
+		}
+		err = errors.New("Failed to decrypt/verify DEK" + hint)
+	}
+	return out, err
 }
 
 func pipeThroughGPG(content []byte, args ...string) ([]byte, error) {
