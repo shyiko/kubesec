@@ -9,12 +9,18 @@ import (
 	"os/exec"
 	"strings"
 	"unicode"
+	"encoding/base64"
 )
 
-func Edit(content []byte) ([]byte, error) {
+func Edit(content []byte, cleartext bool) ([]byte, error) {
 	input, ctx, err := Decrypt(content)
 	if err != nil {
 		return nil, err
+	}
+	if cleartext {
+		if input, err = transform(input, decodeBase64Data); err != nil {
+			return nil, err
+		}
 	}
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -30,7 +36,43 @@ func Edit(content []byte) ([]byte, error) {
 	if bytes.Equal(input, output) {
 		return content, nil
 	}
+	if cleartext {
+		if output, err = transform(output, encodeDataToBase64); err != nil {
+			return nil, err
+		}
+	}
 	return Encrypt(output, *ctx)
+}
+
+func transform(data []byte, cb func(rs *resource) error) ([]byte, error) {
+	rs, err := unmarshal(data)
+	if err != nil {
+		return nil, err
+	}
+	if err := cb(&rs); err != nil {
+		return nil, err
+	}
+	return marshal(rs)
+}
+
+func decodeBase64Data(rs *resource) error {
+	data := rs.data()
+	for key, value := range data {
+		decodedValue, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return err
+		}
+		data[key] = string(decodedValue)
+	}
+	return nil
+}
+
+func encodeDataToBase64(rs *resource) error {
+	data := rs.data()
+	for key, value := range data {
+		data[key] = base64.StdEncoding.EncodeToString([]byte(value))
+	}
+	return nil
 }
 
 func openInEditor(path string) error {

@@ -53,7 +53,7 @@ func main() {
 		Use:   "encrypt [file]",
 		Short: "Encrypt a Secret (or re-encrypt, possibly with a different set of keys)",
 		Long:  "Re/Encrypt a Secret",
-		RunE: makeRunE(func(resource []byte) ([]byte, error) {
+		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 			var keysToAdd []string
 			var keysToRemove []string
 			changeType := 0
@@ -96,26 +96,31 @@ func main() {
 	encryptCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
+	// todo: --rotate-key
+	editCmd := &cobra.Command{
+		Use:   "edit [file]",
+		Short: "Edit a Secret in your $EDITOR (Secret will be automatically re-encrypted upon save)",
+		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
+			cleartext, _ := cmd.Flags().GetBool("cleartext")
+			return kubesec.Edit(resource, cleartext)
+		}),
+		Example: "  kubesec edit secret.yml\n" +
+			"  cat secret.yml | kubesec edit -",
+	}
+	editCmd.Flags().Bool("cleartext", false, "Auto-decode/encode base64")
 	rootCmd.AddCommand(
 		encryptCmd,
 		&cobra.Command{
 			Use:   "decrypt [file]",
 			Short: "Decrypt a Secret",
-			RunE: makeRunE(func(resource []byte) ([]byte, error) {
+			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 				data, _, err := kubesec.Decrypt(resource)
 				return data, err
 			}),
 			Example: "  kubesec decrypt secret.yml\n" +
 				"  cat secret.yml | kubesec decrypt -",
 		},
-		// todo: --base64, --rotate-key
-		&cobra.Command{
-			Use:   "edit [file]",
-			Short: "Edit a Secret in your $EDITOR (Secret will be automatically re-encrypted upon save)",
-			RunE:  makeRunE(kubesec.Edit),
-			Example: "  kubesec edit secret.yml\n" +
-				"  cat secret.yml | kubesec edit -",
-		},
+		editCmd,
 		&cobra.Command{
 			Use:   "merge [source] [target]",
 			Short: `Superimpose "data" & keys from one Secret over the other`,
@@ -134,8 +139,10 @@ func main() {
 		},
 		&cobra.Command{
 			Use:   "introspect [file]",
-			Short: "Show information about the Secret (who has access to the \"data\", last modification date, etc)",
-			RunE:  makeRunE(kubesec.Introspect),
+			Short: "Show information about the Secret (who has access to the \"data\", etc)",
+			RunE:  makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
+				return kubesec.Introspect(resource)
+			}),
 			Example: "  kubesec introspect secret.yml\n" +
 				"  cat secret.yml | kubesec introspect -",
 		},
@@ -168,13 +175,13 @@ func walk(cmd *cobra.Command, cb func(*cobra.Command)) {
 
 type runE func(cmd *cobra.Command, args []string) error
 
-func makeRunE(fn func([]byte) ([]byte, error)) runE {
+func makeRunE(fn func([]byte, *cobra.Command) ([]byte, error)) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return pflag.ErrHelp
 		}
 		file := args[0]
-		out, err := fn(mustRead(file))
+		out, err := fn(mustRead(file), cmd)
 		if err != nil {
 			log.Fatal(err)
 		}
