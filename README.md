@@ -1,8 +1,8 @@
-# kubesec ![Latest Version](https://img.shields.io/badge/latest-WIP-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
+# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.1.0-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
 
 Secure secret management for Kubernetes.
   
-In short, it allows you to encrypt [Secret](https://kubernetes.io/docs/concepts/configuration/secret/)s so that they could be stored in VCS along 
+In short, it allows you to encrypt [Secret](https://kubernetes.io/docs/concepts/configuration/secret/)s so that they can be stored in VCS along 
 with the rest of resources.  
 An example of encrypted Secret is shown below (note that only the "data" is encrypted (and that keys are left untouched)): 
 
@@ -23,8 +23,8 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 
 `kubesec` is written in Go, works with (or without) [Yubikey](https://www.yubico.com/) ❤. 
 
-> For general-purpose secret management, take a look at [mozilla/sops](https://github.com/mozilla/sops) 
-(`kubesec`'ve drawn a lot of inspiration from it). 
+> For general-purpose secret management, take a look at [mozilla/sops](https://github.com/mozilla/sops)   
+(`kubesec`'s drawn a lot of inspiration from it). 
 
 ## Installation
 
@@ -234,6 +234,7 @@ SECRET_REF: "0"
 ```
 
 </details>
+
 
 > BTW, all these files (+ `ktmpl`) are included in `shyiko/kubesec-playground` docker image [#playground](#playground).
 
