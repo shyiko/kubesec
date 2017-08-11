@@ -50,6 +50,7 @@ type Key struct {
 }
 
 var pathToGPG string
+var keyring string // fixme: global state is bad but it's 2am, sorry
 
 func gpg() string {
 	if pathToGPG == "" {
@@ -61,6 +62,10 @@ func gpg() string {
 		pathToGPG = strings.Split(string(out), "\n")[0]
 	}
 	return pathToGPG
+}
+
+func SetKeyring(path string) {
+	keyring = path
 }
 
 // http://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
@@ -252,6 +257,9 @@ func pipeThroughGPG(content []byte, args ...string) ([]byte, error) {
 	defer func() { os.Remove(tmp.Name() + "E") }()
 	if err != nil {
 		return nil, err
+	}
+	if keyring != "" {
+		args = append(args, "--no-default-keyring", "--keyring", keyring)
 	}
 	command := append([]string{gpg()}, args...)
 	if err := executeInShell(append(command, "-o", tmp.Name()+"E", tmp.Name())...); err != nil {

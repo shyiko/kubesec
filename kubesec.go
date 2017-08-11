@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"github.com/shyiko/kubesec/gpg"
 )
 
 var version string
@@ -38,6 +39,9 @@ func main() {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if debug, _ := cmd.Flags().GetBool("debug"); debug {
 				log.SetLevel(log.DebugLevel)
+			}
+			if keyring, _ := cmd.Flags().GetString("keyring"); keyring != "" {
+				gpg.SetKeyring(keyring)
 			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -159,6 +163,7 @@ func main() {
 		case "merge":
 			cmd.Flags().BoolP("in-place", "i", false, "Write back to [target] (instead of stdout)")
 		}
+		cmd.Flags().String("keyring", "", "GPG keyring to use")
 		cmd.Flags().StringP("output", "o", "", "Redirect output to a file")
 	}
 	walk(rootCmd, func(cmd *cobra.Command) {
