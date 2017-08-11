@@ -13,9 +13,15 @@ import (
 )
 
 func Edit(content []byte, cleartext bool) ([]byte, error) {
-	input, ctx, err := Decrypt(content)
-	if err != nil {
-		return nil, err
+	input := content
+	ctx := &EncryptionContext{}
+	var err error
+	inputEncrypted := IsEncrypted(content)
+	if inputEncrypted {
+		input, ctx, err = Decrypt(content)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if cleartext {
 		if input, err = transform(input, decodeBase64Data); err != nil {
@@ -28,12 +34,15 @@ func Edit(content []byte, cleartext bool) ([]byte, error) {
 	}
 	defer func() { os.Remove(tmp.Name()) }()
 	ioutil.WriteFile(tmp.Name(), input, 0600)
-	openInEditor(tmp.Name())
+	err = openInEditor(tmp.Name())
+	if err != nil {
+		return nil, errors.New("$EDITOR (vim, if not specified) terminated with exit code other than 0")
+	}
 	output, err := ioutil.ReadFile(tmp.Name())
 	if err != nil {
 		return nil, err
 	}
-	if bytes.Equal(input, output) {
+	if inputEncrypted && bytes.Equal(input, output) {
 		return content, nil
 	}
 	if cleartext {

@@ -3,6 +3,9 @@ package cmd
 import (
 	"reflect"
 	"testing"
+	"os"
+	"regexp"
+	"strings"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
@@ -44,5 +47,43 @@ func TestParseCommand(t *testing.T) {
 	expected := []string{"path/to/bin", "arg1", "arg2", "arg3", "'", "\"", "", "", "a g", "a g", "\"", "'"}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("actual: %#v != expected: %#v", actual, expected)
+	}
+}
+
+func TestEditUnencrypted(t *testing.T) {
+	os.Setenv("EDITOR", "true")
+	actual, err := Edit([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := `data:
+  key: ANYTHING
+kind: Secret
+# kubesec:v:1
+# kubesec:pgp:ANYTHING`
+	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
+		MatchString(string(actual)) {
+		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)
+	}
+}
+
+func TestEditEncrypted(t *testing.T) {
+	os.Setenv("EDITOR", "true")
+	encrypted, err := Encrypt([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EncryptionContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, err := Edit(encrypted, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := `data:
+  key: ANYTHING
+kind: Secret
+# kubesec:v:1
+# kubesec:pgp:ANYTHING`
+	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
+		MatchString(string(actual)) {
+		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)
 	}
 }
