@@ -5,12 +5,12 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	kubesec "github.com/shyiko/kubesec/cmd"
+	"github.com/shyiko/kubesec/gpg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"io/ioutil"
 	"os"
 	"strings"
-	"github.com/shyiko/kubesec/gpg"
 )
 
 var version string
