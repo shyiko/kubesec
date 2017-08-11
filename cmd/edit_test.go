@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"reflect"
-	"testing"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
+	"testing"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
@@ -35,7 +35,7 @@ func TestEncryptDecryptDifferentKey(t *testing.T) {
 		t.Fail()
 	} else {
 		actual := err.Error()
-		expected := "PGP key required to decrypt the data wasn't found"
+		expected := "PGP key required to decrypt the \"data\" wasn't found"
 		if actual != expected {
 			t.Fatalf("actual: %#v != expected: %#v", actual, expected)
 		}

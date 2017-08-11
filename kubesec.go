@@ -50,9 +50,10 @@ func main() {
 	}
 	var keys []string
 	encryptCmd := &cobra.Command{
-		Use:   "encrypt [file]",
-		Short: "Encrypt a Secret (or re-encrypt, possibly with a different set of keys)",
-		Long:  "Re/Encrypt a Secret",
+		Use:     "encrypt [file]",
+		Aliases: []string{"e"},
+		Short:   "Encrypt a Secret (or re-encrypt, possibly with a different set of keys)",
+		Long:    "Re/Encrypt a Secret",
 		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 			var keysToAdd []string
 			var keysToRemove []string
@@ -98,8 +99,9 @@ func main() {
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
 	// todo: --rotate-key
 	editCmd := &cobra.Command{
-		Use:   "edit [file]",
-		Short: "Edit a Secret in your $EDITOR (Secret will be automatically re-encrypted upon save)",
+		Use:     "edit [file]",
+		Aliases: []string{"ee"},
+		Short:   "Edit a Secret in your $EDITOR (Secret will be automatically re-encrypted upon save)",
 		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 			cleartext, _ := cmd.Flags().GetBool("cleartext")
 			return kubesec.Edit(resource, cleartext)
@@ -111,8 +113,9 @@ func main() {
 	rootCmd.AddCommand(
 		encryptCmd,
 		&cobra.Command{
-			Use:   "decrypt [file]",
-			Short: "Decrypt a Secret",
+			Use:     "decrypt [file]",
+			Aliases: []string{"d"},
+			Short:   "Decrypt a Secret",
 			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 				data, _, err := kubesec.Decrypt(resource)
 				return data, err
@@ -122,8 +125,9 @@ func main() {
 		},
 		editCmd,
 		&cobra.Command{
-			Use:   "merge [source] [target]",
-			Short: `Superimpose "data" & keys from one Secret over the other`,
+			Use:     "merge [source] [target]",
+			Aliases: []string{"m"},
+			Short:   `Superimpose "data" & keys from one Secret over the other`,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if len(args) != 2 {
 					return pflag.ErrHelp
@@ -138,8 +142,9 @@ func main() {
 			Example: "  kubesec merge secret.yml -",
 		},
 		&cobra.Command{
-			Use:   "introspect [file]",
-			Short: "Show information about the Secret (who has access to the \"data\", etc)",
+			Use:     "introspect [file]",
+			Aliases: []string{"i"},
+			Short:   "Show information about the Secret (who has access to the \"data\", etc)",
 			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 				return kubesec.Introspect(resource)
 			}),
