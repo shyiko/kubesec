@@ -107,7 +107,7 @@ func main() {
 		Example: "  kubesec edit secret.yml\n" +
 			"  cat secret.yml | kubesec edit -",
 	}
-	editCmd.Flags().Bool("cleartext", false, "Auto-decode/encode base64")
+	editCmd.Flags().BoolP("cleartext", "c", false, "Auto-decode/encode base64")
 	rootCmd.AddCommand(
 		encryptCmd,
 		&cobra.Command{
