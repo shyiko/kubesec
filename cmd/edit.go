@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"unicode"
-	"fmt"
 )
 
 type EditOpt struct {
