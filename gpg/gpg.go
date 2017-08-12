@@ -46,7 +46,7 @@ type Key struct {
 	Fingerprint   string
 	KeyCapability KeyCapabilities
 	Primary       bool
-	UserId        string
+	UserId        []string
 }
 
 var pathToGPG string
@@ -69,21 +69,22 @@ func SetKeyring(path string) {
 }
 
 // http://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
-func PrimaryKey() (*Key, error) {
+func PrimaryKey() (Key, error) {
 	keys, err := ListSecretKeys()
 	if err != nil {
-		return nil, err
+		return Key{}, err
 	}
 	for _, key := range keys {
 		if key.Primary {
 			return key, nil
 		}
 	}
-	return nil, errors.New("Primary PGP key not found")
+	return Key{}, errors.New("Primary PGP key wasn't found")
 }
 
 func parseKeys(data []byte) ([]Key, error) {
-	var keys []Key
+	var keys []*Key
+	var key *Key
 	for _, line := range strings.Split(string(data), "\n") {
 		fields := strings.Split(line, ":")
 		if len(fields) >= 10 {
@@ -113,7 +114,7 @@ func parseKeys(data []byte) ([]Key, error) {
 				//	a potential letter 'D' to indicate a disabled key.
 				keyCapabilitiesString := fields[11]
 				if !strings.Contains(keyCapabilitiesString, "D") {
-					key := Key{}
+					key = &Key{}
 					keyCapabilitiesMap := make(map[KeyCapability]bool)
 					for _, c := range strings.ToLower(keyCapabilitiesString) {
 						switch c {
@@ -139,32 +140,25 @@ func parseKeys(data []byte) ([]Key, error) {
 					sort.Sort(key.KeyCapability)
 					keys = append(keys, key)
 				}
-			} else if typeOfRecord == "fpr" {
-				key := keys[len(keys)-1]
+			} else if typeOfRecord == "fpr" && key != nil {
 				key.Fingerprint = fields[9]
-				keys[len(keys)-1] = key
-			} else if typeOfRecord == "uid" {
-				key := keys[len(keys)-1]
-				if key.UserId == "" {
-					key.UserId = fields[9]
-				} else {
-					key.UserId += ", " + fields[9]
-				}
-				keys[len(keys)-1] = key
-			} // todo: nil ref to lastKey in case of unexpected record
+			} else if typeOfRecord == "uid" && key != nil {
+				key.UserId = append(key.UserId, fields[9])
+			} else {
+				key = nil
+			}
 		}
 	}
 	var validKeys []Key
 	for _, key := range keys {
 		if key.Fingerprint != "" {
-			validKeys = append(validKeys, key)
+			validKeys = append(validKeys, *key)
 		}
 	}
 	return validKeys, nil
 }
 
-// todo: return real thing, not a pointer
-func ListSecretKeys() ([]*Key, error) {
+func ListSecretKeys() ([]Key, error) {
 	// "--fingerprint" x2 so that fingerprints would be printed for subkeys too
 	out, err := executeInShellAndGrabOutput(gpg(), "--list-secret-keys", "--with-colons", "--fingerprint", "--fingerprint")
 	// output example:
@@ -179,7 +173,6 @@ func ListSecretKeys() ([]*Key, error) {
 	}
 	if keyCapabilitiesMissing(keys) {
 		// must be we're in gpg < 2.1 land (--list-secret-keys is missing KeyCapability data)
-		// todo: should we print a warning?
 		publicKeys, err := ListKeys()
 		if err != nil {
 			return nil, err
@@ -196,11 +189,11 @@ func ListSecretKeys() ([]*Key, error) {
 			}
 		}
 	}
-	var res []*Key
+	var res []Key
 	for i, key := range keys {
 		for _, keyCapability := range key.KeyCapability {
 			if keyCapability == KCEncrypt {
-				res = append(res, &keys[i])
+				res = append(res, keys[i])
 			}
 		}
 	}
@@ -231,7 +224,7 @@ func EncryptAndSign(data []byte, recipient string) ([]byte, error) {
 	if _, ok := err.(*exec.ExitError); ok {
 		hint := ""
 		if log.GetLevel() != log.DebugLevel {
-			hint = " (add --debug CLI flag to find out why)"
+			hint = " (re-run with --debug flag to get more details)"
 		}
 		err = errors.New("Failed to encrypt/sign DEK with PGP key " + recipient + hint)
 	}
@@ -243,7 +236,7 @@ func DecryptAndVerify(data []byte) ([]byte, error) {
 	if _, ok := err.(*exec.ExitError); ok {
 		hint := ""
 		if log.GetLevel() != log.DebugLevel {
-			hint = " (add --debug CLI flag to find out why)"
+			hint = " (re-run with --debug flag to get more details)"
 		}
 		err = errors.New("Failed to decrypt/verify DEK" + hint)
 	}

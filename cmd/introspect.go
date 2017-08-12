@@ -23,7 +23,7 @@ func Introspect(resource []byte) ([]byte, error) {
 	}
 	uidByFP := make(map[string]string)
 	for _, key := range knownKeys {
-		uidByFP[key.Fingerprint] = key.UserId
+		uidByFP[key.Fingerprint] = strings.Join(key.UserId, ", ")
 	}
 	var res []string
 	res = append(res, "# PGP fingerprint(s)")

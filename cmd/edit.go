@@ -10,9 +10,15 @@ import (
 	"os/exec"
 	"strings"
 	"unicode"
+	"fmt"
 )
 
-func Edit(content []byte, cleartext bool) ([]byte, error) {
+type EditOpt struct {
+	Base64 bool
+	Rotate bool
+}
+
+func Edit(content []byte, opt EditOpt) ([]byte, error) {
 	input := content
 	ctx := &EncryptionContext{}
 	var err error
@@ -22,8 +28,11 @@ func Edit(content []byte, cleartext bool) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if opt.Rotate {
+			ctx.RotateSymmetricKey()
+		}
 	}
-	if cleartext {
+	if !opt.Base64 {
 		if input, err = transform(input, decodeBase64Data); err != nil {
 			return nil, err
 		}
@@ -45,7 +54,7 @@ func Edit(content []byte, cleartext bool) ([]byte, error) {
 	if inputEncrypted && bytes.Equal(input, output) {
 		return content, nil
 	}
-	if cleartext {
+	if !opt.Base64 {
 		if output, err = transform(output, encodeDataToBase64); err != nil {
 			return nil, err
 		}
@@ -69,7 +78,7 @@ func decodeBase64Data(rs *resource) error {
 	for key, value := range data {
 		decodedValue, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to base64-decode %s", key)
 		}
 		data[key] = string(decodedValue)
 	}
@@ -103,7 +112,7 @@ func openInEditor(path string) error {
 	log.Debugf(`Executing %s %s`, editor, strings.Join(args, " "))
 	cmd = exec.Command(editor, args...)
 	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

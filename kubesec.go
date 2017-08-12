@@ -15,6 +15,15 @@ import (
 
 var version string
 
+const template = `apiVersion: v1
+kind: Secret
+metadata:
+  name: __SECRET_NAME__
+type: Opaque
+data:
+  __KEY__: ""
+`
+
 func init() {
 	log.SetFormatter(&simpleFormatter{})
 	log.SetLevel(log.InfoLevel)
@@ -101,19 +110,21 @@ func main() {
 	encryptCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
-	// todo: --rotate-key
 	editCmd := &cobra.Command{
 		Use:     "edit [file]",
 		Aliases: []string{"ee"},
 		Short:   "Edit a Secret in your $EDITOR (Secret will be automatically re-encrypted upon save)",
 		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
-			cleartext, _ := cmd.Flags().GetBool("cleartext")
-			return kubesec.Edit(resource, cleartext)
+			base64, _ := cmd.Flags().GetBool("base64")
+			rotate, _ := cmd.Flags().GetBool("rotate")
+			return kubesec.Edit(resource, kubesec.EditOpt{Base64: base64, Rotate: rotate})
 		}),
 		Example: "  kubesec edit secret.yml\n" +
 			"  cat secret.yml | kubesec edit -",
 	}
-	editCmd.Flags().BoolP("cleartext", "c", false, "Auto-decode/encode base64")
+	editCmd.Flags().BoolP("rotate", "r", false, "Rotate Data Encryption Key")
+	editCmd.Flags().BoolP("base64", "b", false, "Keep values in Base64 (by default values are decoded before being passed to the $EDITOR (and then re-encoded on save))")
+	editCmd.Flags().BoolP("force", "f", false, "Create Secret if it doesn't exist")
 	rootCmd.AddCommand(
 		encryptCmd,
 		&cobra.Command{
@@ -168,6 +179,7 @@ func main() {
 	}
 	walk(rootCmd, func(cmd *cobra.Command) {
 		cmd.Flags().BoolP("help", "h", false, "Print usage")
+		cmd.Flags().MarkHidden("help")
 	})
 	rootCmd.PersistentFlags().Bool("debug", false, "Turn on debug output")
 	rootCmd.Flags().Bool("version", false, "Print version information")
@@ -191,7 +203,18 @@ func makeRunE(fn func([]byte, *cobra.Command) ([]byte, error)) runE {
 			return pflag.ErrHelp
 		}
 		file := args[0]
-		out, err := fn(mustRead(file), cmd)
+		input, err := read(file)
+		force, _ := cmd.Flags().GetBool("force")
+		if err != nil {
+			if os.IsNotExist(err) && force {
+				input = []byte(template)
+			} else {
+				log.Fatal(err)
+			}
+		} else if file == "-" && len(input) == 0 && force {
+			input = []byte(template)
+		}
+		out, err := fn(input, cmd)
 		if err != nil {
 			log.Fatal(err)
 		}

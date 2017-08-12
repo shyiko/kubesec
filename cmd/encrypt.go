@@ -97,11 +97,11 @@ func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
 		}
 	}
 	if ctx.Keys == nil {
-		key, err := gpg.PrimaryKey()
+		primaryKey, err := gpg.PrimaryKey()
 		if err != nil {
-			return nil, err // todo: improve message
+			return nil, err
 		}
-		ctx.Keys = []Key{{Fingerprint: key.Fingerprint}}
+		ctx.Keys = []Key{{Fingerprint: primaryKey.Fingerprint}}
 	}
 	return marshalWithEncryptionContext(rs, ctx)
 }

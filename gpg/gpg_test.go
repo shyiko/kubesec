@@ -24,7 +24,7 @@ fpr:::::::::AB059359A3B81F410FCFF97F5CE086B5B5A18FF4:
 			Fingerprint:   "ECAF7590EB3443B5C7CF3ACB6C7EE1B8621CC013",
 			KeyCapability: []KeyCapability{KCEncrypt, KCSign, KCCertify},
 			Primary:       true,
-			UserId:        "Werner Koch <wk@g10code.com>, Werner Koch <wk@gnupg.org>",
+			UserId:        []string{"Werner Koch <wk@g10code.com>", "Werner Koch <wk@gnupg.org>"},
 		},
 		{
 			Fingerprint:   "CF8BCC4B18DE08FCD8A1615906AD222CADF6A6E1",
@@ -57,7 +57,7 @@ ssb:u:2048:1:E8C57A8030129DB0:1502024599::::::e:::+:::
 			Fingerprint:   "4943AC2D8BBC61B9113EE7EF14D4CA94236EC4A7",
 			KeyCapability: []KeyCapability{KCEncrypt, KCSign, KCCertify},
 			Primary:       true,
-			UserId:        "Jean-Luc Picard (-) <jean-luc.picard@uss@enterprise-d>",
+			UserId:        []string{"Jean-Luc Picard (-) <jean-luc.picard@uss@enterprise-d>"},
 		},
 	}
 	if !reflect.DeepEqual(actual, expected) {

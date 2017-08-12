@@ -155,7 +155,7 @@ func TestEncryptWithMissingKey(t *testing.T) {
 		t.Fail()
 	} else {
 		actual := err.Error()
-		expected := "Failed to encrypt/sign DEK with PGP key B90F6449FEBC20F00DB13ED8212659B22565CA8 (add --debug CLI flag to find out why)"
+		expected := "Failed to encrypt/sign DEK with PGP key B90F6449FEBC20F00DB13ED8212659B22565CA8 (re-run with --debug flag to get more details)"
 		if actual != expected {
 			t.Fatalf("actual: %#v != expected: %#v", actual, expected)
 		}

@@ -52,7 +52,7 @@ func TestParseCommand(t *testing.T) {
 
 func TestEditUnencrypted(t *testing.T) {
 	os.Setenv("EDITOR", "true")
-	actual, err := Edit([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), false)
+	actual, err := Edit([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EditOpt{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestEditEncrypted(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, err := Edit(encrypted, false)
+	actual, err := Edit(encrypted, EditOpt{})
 	if err != nil {
 		t.Fatal(err)
 	}
