@@ -8,7 +8,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: a3f95b5c423586578a4e099b11a46c2479628cac
 - name: github.com/spf13/cobra
-  version: c678ff029ee250b65714e518f4f5c5cb934955de
+  version: b26b538f693051ac6518e65672de3144ce3fbedc
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: golang.org/x/sys
