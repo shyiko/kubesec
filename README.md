@@ -1,6 +1,8 @@
 # kubesec ![Latest Version](https://img.shields.io/badge/latest-0.1.0-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
 
 Secure secret management for [Kubernetes](https://kubernetes.io/).
+
+[![asciicast](https://asciinema.org/a/YCUk0q7e3qUi6kjqJq9NQdt6c.png)](https://asciinema.org/a/YCUk0q7e3qUi6kjqJq9NQdt6c)  
   
 In short, it allows you to encrypt [Secret](https://kubernetes.io/docs/concepts/configuration/secret/)s so that they can be stored in VCS along 
 with the rest of resources.  
