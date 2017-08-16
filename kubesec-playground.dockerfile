@@ -33,12 +33,14 @@ RUN curl -sSL https://github.com/InQuicker/ktmpl/releases/download/0.7.0/ktmpl-0
 RUN curl -sSL https://github.com/mikefarah/yaml/releases/download/1.11/yaml_linux_amd64 -o /usr/local/bin/yaml &&\
     chmod a+x /usr/local/bin/yaml
 
-RUN curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.0/kubesec-0.1.0-$(\
-      bash -c '[ $OSTYPE = darwin* ] && echo darwin || echo linux'\
+ENV KUBESEC_VERSION=0.1.0
+
+RUN curl -sSL https://github.com/shyiko/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
+      bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'\
     )-amd64 > kubesec &&\
   chmod a+x kubesec &&\
-  curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.0/kubesec-0.1.0-$(\
-      bash -c '[ $OSTYPE = darwin* ] && echo darwin || echo linux'\
+  curl -sSL https://github.com/shyiko/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
+      bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'\
     )-amd64.asc > kubesec.asc &&\
   gpg2 --verify kubesec.asc &&\
   mv kubesec /usr/local/bin

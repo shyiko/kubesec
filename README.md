@@ -34,12 +34,12 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 
 ```sh
 curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.0/kubesec-0.1.0-$(
-    bash -c '[ $OSTYPE = darwin* ] && echo darwin || echo linux'
+    bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64 > kubesec && chmod a+x kubesec
     
 # verify PGP signature (optional but RECOMMENDED)
 curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.0/kubesec-0.1.0-$(
-    bash -c '[ $OSTYPE = darwin* ] && echo darwin || echo linux'
+    bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64.asc > kubesec.asc
 curl https://keybase.io/shyiko/pgp_keys.asc | gpg --import
 gpg --verify kubesec.asc
