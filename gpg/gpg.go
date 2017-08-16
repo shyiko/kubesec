@@ -55,8 +55,8 @@ var keyring string // fixme: global state is bad but it's 2am, sorry
 func gpg() string {
 	if pathToGPG == "" {
 		cmd := exec.Command("which", "gpg2", "/usr/bin/gpg2", "gpg", "/usr/bin/gpg")
-		out, err := cmd.Output()
-		if err != nil {
+		out, _ := cmd.Output()
+		if len(out) == 0 {
 			log.Fatal("`gpg` wasn't found (make sure it's available on the PATH)")
 		}
 		pathToGPG = strings.Split(string(out), "\n")[0]
