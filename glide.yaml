@@ -4,3 +4,12 @@ import:
 - package: github.com/spf13/pflag
 - package: gopkg.in/yaml.v2
 - package: github.com/Sirupsen/logrus
+- package: google.golang.org/api
+  subpackages:
+  - cloudkms
+- package: golang.org/x/oauth2
+  subpackages:
+  - google
+- package: github.com/aws/aws-sdk-go
+  subpackages:
+  - service/kms

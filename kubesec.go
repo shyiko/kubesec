@@ -62,40 +62,43 @@ func main() {
 		},
 	}
 	var keys []string
+	buildKeySet := func() (*kubesec.KeySetMutation, error) {
+		var keysToAdd []kubesec.Key
+		var keysToRemove []kubesec.Key
+		changeType := 0
+		for _, key := range keys {
+			if key == "" {
+				continue
+			}
+			switch key[0] {
+			case '+':
+				keysToAdd = append(keysToAdd, mustParseKey(strings.TrimPrefix(key, "+")))
+				changeType |= 2
+			case '-':
+				keysToRemove = append(keysToRemove, mustParseKey(strings.TrimPrefix(key, "-")))
+				changeType |= 2
+			default:
+				keysToAdd = append(keysToAdd, mustParseKey(key))
+				changeType |= 1
+			}
+		}
+		if changeType == 3 {
+			log.Fatal("--key=+.../--key=-... cannot be used together with --key=...")
+			return nil, nil
+		}
+		return &kubesec.KeySetMutation{Replace: changeType == 1, Add: keysToAdd, Remove: keysToRemove}, nil
+	}
 	encryptCmd := &cobra.Command{
 		Use:     "encrypt [file]",
 		Aliases: []string{"e"},
 		Short:   "Encrypt a Secret (or re-encrypt, possibly with a different set of keys)",
 		Long:    "Re/Encrypt a Secret",
 		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
-			var keysToAdd []string
-			var keysToRemove []string
-			changeType := 0
-			for _, key := range keys {
-				if key == "" {
-					continue
-				}
-				switch key[0] {
-				case '+':
-					keysToAdd = append(keysToAdd, strings.TrimPrefix(key, "+"))
-					changeType |= 2
-				case '-':
-					keysToRemove = append(keysToRemove, strings.TrimPrefix(key, "-"))
-					changeType |= 2
-				default:
-					keysToAdd = append(keysToAdd, key)
-					changeType |= 1
-				}
+			keySet, err := buildKeySet()
+			if err != nil {
+				return nil, err
 			}
-			if changeType == 3 {
-				log.Fatal("--key=+.../--key=-... cannot be used together with --key=...")
-				return nil, nil
-			}
-			return kubesec.EncryptWithKeySet(resource, kubesec.KeySet{
-				Replace: changeType == 1,
-				Add:     keysToAdd,
-				Remove:  keysToRemove,
-			})
+			return kubesec.EncryptWithKeySetMutation(resource, *keySet)
 		}),
 		Example: "  kubesec encrypt secret.yml\n\n" +
 			"  # same as above but output is written back to secret.yml (instead of stdout)\n" +
@@ -115,9 +118,13 @@ func main() {
 		Aliases: []string{"ee"},
 		Short:   "Edit a Secret in your $EDITOR (Secret will be automatically re-encrypted upon save)",
 		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
+			keySet, err := buildKeySet()
+			if err != nil {
+				return nil, err
+			}
 			base64, _ := cmd.Flags().GetBool("base64")
 			rotate, _ := cmd.Flags().GetBool("rotate")
-			return kubesec.Edit(resource, kubesec.EditOpt{Base64: base64, Rotate: rotate})
+			return kubesec.Edit(resource, kubesec.EditOpt{Base64: base64, Rotate: rotate, KeySetMutation: *keySet})
 		}),
 		Example: "  kubesec edit secret.yml\n" +
 			"  cat secret.yml | kubesec edit -",
@@ -186,6 +193,14 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(-1)
 	}
+}
+
+func mustParseKey(key string) kubesec.Key {
+	res, err := kubesec.NewKey(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return *res
 }
 
 func walk(cmd *cobra.Command, cb func(*cobra.Command)) {

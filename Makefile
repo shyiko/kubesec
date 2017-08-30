@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-VERSION := $(shell git describe --tags)
+VERSION := $(shell git describe --tags --abbrev=0)
 
 fetch:
 	go get \
@@ -17,10 +17,18 @@ fmt:
 	gofmt -l -s -w `find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./.tmp/*"`
 
 test:
+	KUBESEC_TEST_AWS_KMS_KEY= KUBESEC_TEST_GCP_KMS_KEY= make .test
+
+test-integration:
+	test -n "$(KUBESEC_TEST_AWS_KMS_KEY)" # $$KUBESEC_TEST_AWS_KMS_KEY must be set
+	test -n "$(KUBESEC_TEST_GCP_KMS_KEY)" # $$KUBESEC_TEST_GCP_KMS_KEY must be set
+	make .test
+
+.test:
 	go vet `go list ./... | grep -v /vendor/`
 	SRC=`find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./.tmp/*"` && \
 		gofmt -l -s $$SRC | read && gofmt -l -s -d $$SRC && exit 1 || true
-	go test `go list ./... | grep -v /vendor/`
+	go test -v `go list ./... | grep -v /vendor/` | grep -v "=== RUN"
 
 test-coverage:
 	go list ./... | grep -v /vendor/ | xargs -L1 -I{} sh -c 'go test -coverprofile `basename {}`.coverprofile {}' && \

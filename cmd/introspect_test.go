@@ -24,14 +24,18 @@ func TestIntrospect(t *testing.T) {
 	}
 	encrypted, err := Encrypt([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{
 		Keys: Keys{
-			Key{Fingerprint: expected[0]},
-			Key{Fingerprint: expected[1]},
+			KeyWithDEK{Key{KTPGP, expected[0]}, nil},
+			KeyWithDEK{Key{KTPGP, expected[1]}, nil},
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	actual, err := listPGPFP(encrypted)
+	ctx, err := reconstructEncryptionContext(encrypted, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, err := keyIds(ctx, KTPGP)
 	if err != nil {
 		t.Fatal(err)
 	}

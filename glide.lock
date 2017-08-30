@@ -1,8 +1,19 @@
-hash: f27c8a076f6401671f4839051dcccd5fa8f4c2e75d206854eac90cf5153283ff
-updated: 2017-08-07T14:44:56.800977036-07:00
+hash: 78b6993022957165ff64d7201fca74003c5b20f211bc21f86a222177f50ded82
+updated: 2017-08-27T14:42:17.23702774-07:00
 imports:
-- name: github.com/go-errors/errors
-  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
+- name: cloud.google.com/go
+  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
+  subpackages:
+  - compute/metadata
+  - internal
+- name: github.com/aws/aws-sdk-go
+  version: 63ce630574a5ec05ecd8e8de5cea16332a5a684d
+  subpackages:
+  - service/kms
+- name: github.com/golang/protobuf
+  version: 4bd1920723d7b7c925de087aa32e2187708897f7
+  subpackages:
+  - proto
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/Sirupsen/logrus
@@ -11,10 +22,42 @@ imports:
   version: b26b538f693051ac6518e65672de3144ce3fbedc
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: golang.org/x/net
+  version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
+  subpackages:
+  - context
+  - context/ctxhttp
+- name: golang.org/x/oauth2
+  version: a6bd8cefa1811bd24b86f8902872e4e8225f74c4
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
 - name: golang.org/x/sys
   version: afce3de5756ca82699128ebae46ac95ad59d6297
   subpackages:
   - unix
+- name: google.golang.org/api
+  version: e3824ed33c72bf7e81da0286772c34b987520914
+  subpackages:
+  - cloudkms
+  - cloudkms/v1
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+- name: google.golang.org/appengine
+  version: 12d5545dc1cfa6047a286d5e853841b6471f4c19
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

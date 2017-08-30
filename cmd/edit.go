@@ -14,8 +14,10 @@ import (
 )
 
 type EditOpt struct {
-	Base64 bool
-	Rotate bool
+	Base64         bool
+	Rotate         bool
+	KeySetMutation KeySetMutation
+	Editor         string
 }
 
 func Edit(content []byte, opt EditOpt) ([]byte, error) {
@@ -29,7 +31,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 			return nil, err
 		}
 		if opt.Rotate {
-			ctx.RotateSymmetricKey()
+			ctx.RotateDEK()
 		}
 	}
 	if !opt.Base64 {
@@ -43,7 +45,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 	}
 	defer func() { os.Remove(tmp.Name()) }()
 	ioutil.WriteFile(tmp.Name(), input, 0600)
-	err = openInEditor(tmp.Name())
+	err = openInEditor(opt.Editor, tmp.Name())
 	if err != nil {
 		return nil, errors.New("$EDITOR (vim, if not specified) terminated with exit code other than 0")
 	}
@@ -51,7 +53,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if inputEncrypted && bytes.Equal(input, output) {
+	if inputEncrypted && bytes.Equal(input, output) && opt.KeySetMutation.IsEmpty() {
 		return content, nil
 	}
 	if !opt.Base64 {
@@ -59,6 +61,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 			return nil, err
 		}
 	}
+	opt.KeySetMutation.applyTo(ctx)
 	return Encrypt(output, *ctx)
 }
 
@@ -93,10 +96,12 @@ func encodeDataToBase64(rs *resource) error {
 	return nil
 }
 
-func openInEditor(path string) error {
-	editor := os.Getenv("EDITOR")
+func openInEditor(editor string, path string) error {
 	var cmd *exec.Cmd
 	var args []string
+	if editor == "" {
+		editor = os.Getenv("EDITOR")
+	}
 	if editor == "" {
 		cmd = exec.Command("which", "vim")
 		out, err := cmd.Output()

@@ -47,25 +47,25 @@ func TestEncrypt(t *testing.T) {
 
 func TestKeyRotation(t *testing.T) {
 	ctx := EncryptionContext{
-		SymmetricKey: []byte{1},
+		DEK: []byte{1},
 		Keys: Keys{
-			Key{Fingerprint: "2", EncryptedSymmetricKey: []byte{3}},
-			Key{Fingerprint: "4", EncryptedSymmetricKey: []byte{5}},
+			KeyWithDEK{Key{KTPGP, "2"}, []byte{3}},
+			KeyWithDEK{Key{KTPGP, "4"}, []byte{5}},
 		},
 		Stash: map[string]interface{}{
 			"key": "value",
 		},
 	}
-	ctx.RotateSymmetricKey()
-	if ctx.SymmetricKey != nil {
-		t.Fatal("expected ctx.SymmetricKey != nil")
+	ctx.RotateDEK()
+	if ctx.DEK != nil {
+		t.Fatal("expected ctx.DEK != nil")
 	}
 	if len(ctx.Keys) != 2 {
 		t.Fatal("expected len(ctx.Keys) != 1")
 	}
 	for _, key := range ctx.Keys {
-		if key.EncryptedSymmetricKey != nil {
-			t.Fatal("expected Keys[" + key.Fingerprint + "].EncryptedSymmetricKey != nil")
+		if key.EncryptedDEK != nil {
+			t.Fatal("expected Keys[" + key.Id + "].EncryptedDEK != nil")
 		}
 	}
 	if ctx.Stash != nil {
@@ -84,7 +84,7 @@ func TestEncryptKeyAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 	anotherFP := "72ECF46A56B4AD39C907BBB71646B01B86E50310"
-	actual, err := EncryptWithKeySet(encrypted, KeySet{Add: []string{anotherFP}})
+	actual, err := EncryptWithKeySetMutation(encrypted, KeySetMutation{Add: []Key{{KTPGP, anotherFP}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestFingerprintRemoveLastOne(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := EncryptWithKeySet(encrypted, KeySet{Remove:[]string{primaryKey.Fingerprint}}); err == nil {
+	if _, err := EncryptWithKeySetMutation(encrypted, KeySetMutation{Remove:[]string{primaryKey.ID}}); err == nil {
 		t.Fail()
 	}
 }
@@ -128,17 +128,23 @@ func TestEncryptKeyRemove(t *testing.T) {
 	}
 	encrypted, err := Encrypt([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{
 		Keys: Keys{
-			Key{Fingerprint: expected[0]},
-			Key{Fingerprint: expected[1]},
+			KeyWithDEK{Key{KTPGP, expected[0]}, nil},
+			KeyWithDEK{Key{KTPGP, expected[1]}, nil},
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if encrypted, err := EncryptWithKeySet(encrypted, KeySet{Remove: []string{expected[1]}}); err != nil {
+	if encrypted, err := EncryptWithKeySetMutation(encrypted, KeySetMutation{
+		Remove: []Key{{KTPGP, expected[1]}},
+	}); err != nil {
 		t.Fail()
 	} else {
-		actual, err := listPGPFP(encrypted)
+		ctx, err := reconstructEncryptionContext(encrypted, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		actual, err := keyIds(ctx, KTPGP)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -150,7 +156,9 @@ func TestEncryptKeyRemove(t *testing.T) {
 
 func TestEncryptWithMissingKey(t *testing.T) {
 	if _, err := Encrypt([]byte(`{"kind": "Secret"}`), EncryptionContext{
-		Keys: Keys{Key{Fingerprint: "B90F6449FEBC20F00DB13ED8212659B22565CA8"}},
+		Keys: Keys{
+			KeyWithDEK{Key{KTPGP, "B90F6449FEBC20F00DB13ED8212659B22565CA8"}, nil},
+		},
 	}); err == nil {
 		t.Fail()
 	} else {

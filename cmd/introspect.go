@@ -10,12 +10,30 @@ func Introspect(resource []byte) ([]byte, error) {
 	if !IsEncrypted(resource) {
 		return nil, errors.New("Not encrypted")
 	}
-	fpList, err := listPGPFP(resource)
+	ctx, err := reconstructEncryptionContext(resource, false)
+	if err != nil {
+		return nil, err
+	}
+	var res []string
+	for _, fn := range []func(*EncryptionContext) ([]string, error){
+		listPGPKeys, listGCPKMSKeys, listAWSKMSKeys,
+	} {
+		list, err := fn(ctx)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, list...)
+	}
+	return []byte(strings.Join(res, "\n")), nil
+}
+
+func listPGPKeys(ctx *EncryptionContext) ([]string, error) {
+	fpList, err := keyIds(ctx, KTPGP)
 	if err != nil {
 		return nil, err
 	}
 	if len(fpList) == 0 {
-		return []byte{}, nil
+		return nil, nil
 	}
 	knownKeys, err := gpg.ListKeys()
 	if err != nil {
@@ -39,17 +57,43 @@ func Introspect(resource []byte) ([]byte, error) {
 	//if len(unknownFPs) > 0 {
 	//	res = append(res, "# use `gpg --recv-keys " + strings.Join(unknownFPs, " ") + "` to import missing key(s)")
 	//}
-	return []byte(strings.Join(res, "\n")), nil
+	return res, nil
 }
 
-func listPGPFP(resource []byte) ([]string, error) {
-	ctx, err := reconstructEncryptionContext(resource, false)
+func listGCPKMSKeys(ctx *EncryptionContext) ([]string, error) {
+	list, err := keyIds(ctx, KTGCPKMS)
 	if err != nil {
 		return nil, err
 	}
-	var fps []string
-	for _, key := range ctx.Keys {
-		fps = append(fps, key.Fingerprint)
+	if len(list) == 0 {
+		return nil, nil
 	}
-	return fps, nil
+	var res []string
+	res = append(res, "# GCP KMS key(s)")
+	res = append(res, list...)
+	return res, nil
+}
+
+func listAWSKMSKeys(ctx *EncryptionContext) ([]string, error) {
+	list, err := keyIds(ctx, KTAWSKMS)
+	if err != nil {
+		return nil, err
+	}
+	if len(list) == 0 {
+		return nil, nil
+	}
+	var res []string
+	res = append(res, "# AWS KMS key(s)")
+	res = append(res, list...)
+	return res, nil
+}
+
+func keyIds(ctx *EncryptionContext, keyType KeyType) ([]string, error) {
+	var res []string
+	for _, key := range ctx.Keys {
+		if key.Type == keyType {
+			res = append(res, key.Id)
+		}
+	}
+	return res, nil
 }

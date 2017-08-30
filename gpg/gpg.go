@@ -189,7 +189,7 @@ func ListSecretKeys() ([]Key, error) {
 			}
 		}
 	}
-	var res []Key
+	res := []Key{}
 	for i, key := range keys {
 		for _, keyCapability := range key.KeyCapability {
 			if keyCapability == KCEncrypt {
