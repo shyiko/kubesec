@@ -111,7 +111,7 @@ func main() {
 			"  cat secret.yml | kubesec encrypt -",
 	}
 	encryptCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
-		"PGP fingerprint(s), owner(s) of which will be able to decrypt a Secret "+
+		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
 	editCmd := &cobra.Command{
 		Use:     "edit [file]",
@@ -129,6 +129,9 @@ func main() {
 		Example: "  kubesec edit secret.yml\n" +
 			"  cat secret.yml | kubesec edit -",
 	}
+	editCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
+		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
+			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
 	editCmd.Flags().BoolP("rotate", "r", false, "Rotate Data Encryption Key")
 	editCmd.Flags().BoolP("base64", "b", false, "Keep values in Base64 (by default values are decoded before being passed to the $EDITOR (and then re-encoded on save))")
 	editCmd.Flags().BoolP("force", "f", false, "Create Secret if it doesn't exist")
