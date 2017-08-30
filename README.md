@@ -1,6 +1,7 @@
-# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.1.1-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
+# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.2.0-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
 
-Secure secret management for [Kubernetes](https://kubernetes.io/).
+Secure secret management for [Kubernetes](https://kubernetes.io/) (with [gpg](https://gnupg.org/), 
+[Google Cloud KMS](https://cloud.google.com/kms/) and [AWS KMS](https://aws.amazon.com/kms/) backends).
 
 [![asciicast](https://asciinema.org/a/YCUk0q7e3qUi6kjqJq9NQdt6c.png)](https://asciinema.org/a/YCUk0q7e3qUi6kjqJq9NQdt6c)  
   
@@ -33,12 +34,12 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 #### macOS / Linux
 
 ```sh
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.1/kubesec-0.1.1-$(
+curl -sSL https://github.com/shyiko/kubesec/releases/download/0.2.0/kubesec-0.2.0-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64 > kubesec && chmod a+x kubesec
     
 # verify PGP signature (optional but RECOMMENDED)
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.1.1/kubesec-0.1.1-$(
+curl -sSL https://github.com/shyiko/kubesec/releases/download/0.2.0/kubesec-0.2.0-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64.asc > kubesec.asc
 curl https://keybase.io/shyiko/pgp_keys.asc | gpg --import
@@ -51,7 +52,7 @@ Download binary from the "[release(s)](https://github.com/shyiko/kubesec/release
 
 ## Usage
 
-> [gpg](https://gnupg.org/) (tested: 2.0+; recommended: 2.1+) **must** be available on the PATH.   
+> **GPG USERS ONLY**: [gpg](https://gnupg.org/) (tested: 2.0+; recommended: 2.1+) **must** be available on the PATH.   
 It's also highly recommended to set up [gpg-agent](https://wiki.archlinux.org/index.php/GnuPG#gpg-agent) to avoid 
 constant passphrase re-entry.    
 
@@ -61,13 +62,41 @@ kubesec encrypt secret.yml
 # same as above but output is written back to secret.yml (instead of stdout)
 kubesec encrypt -i secret.yml
 
-# encrypt with specific key (you can specify multiple --key|s if you want)
-kubesec encrypt --key=6206C32E111611688694CF5530BDA87E3E71C268 secret.yml
+# NOTE: if you don't specify --key - default PGP key will be used
+# in other words, `kubesec encrypt secret.yml` is identical to 
+kubesec encrypt --key=pgp:default secret.yml
+
+# NOTE: multiple --key|s can be specified if needed 
+# (and they don't have to be of the same type, i.e. `--key=pgp:... --key=arn:...` 
+# is perfectly valid)
+
+# encrypt with PGP key ("pgp:" prefix is optional)
+kubesec encrypt --key=pgp:6206C32E111611688694CF5530BDA87E3E71C268 secret.yml
+
+# encrypt with Google Cloud KMS key ("gcp:" prefix is optional)
+#
+# NOTE: you'll need either to `gcloud auth application-default login` or set
+# GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json 
+# before attempting secret encryption/decryption
+#
+# https://developers.google.com/identity/protocols/application-default-credentials#howtheywork
+kubesec encrypt --key=gcp:<resource-id of Google Cloud KMS key> secret.yml
+kubesec encrypt \ 
+  --key=gcp:projects/project-0/locations/global/keyRings/keyring-0/cryptoKeys/key-0 secret.yml
+
+# encrypt with AWS KMS key ("aws:" prefix is optional)
+#
+# NOTE: you might need to `aws configure` (if you don't have ~/.aws/credentials already)
+#
+# http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+kubesec encrypt --key=aws:<ARN of AWS KMS key> secret.yml
+kubesec encrypt \
+  --key=aws:arn:aws:kms:us-west-1:000000000000:key/00000000-0000-0000-0000-000000000000 secret.yml
 
 # add ...D89 key & drop ...310 key (leave all other keys untouched)
-kubesec encrypt --key=+160A7A9CF46221A56B06AD64461A804F2609FD89 \
-  --key=-6206C32E111611688694CF5530BDA87E3E71C268 secret.yml
-# NOTE: removal of a key will automatically result in encryption key rotation
+kubesec encrypt --key=+pgp:160A7A9CF46221A56B06AD64461A804F2609FD89 \
+  --key=-pgp:6206C32E111611688694CF5530BDA87E3E71C268 secret.yml
+# NOTE: removal of a key will automatically result in data encryption key rotation
 # you will also need to change all the secrets as whoever you removed from the chain of trust might 
 # still have access to the previous version of a file   
 
@@ -80,6 +109,7 @@ kubesec decrypt secret.yml
 
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
 kubesec edit -i secret.yml
+kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.yml
 # same as above but secret.yml will be created if it doesn't exist 
 kubesec edit -if secret.yml
 
@@ -96,7 +126,7 @@ If you have `docker` installed you don't need to download `kubesec` binary just 
 Instead, launch a container and start playing: 
 
 ```sh
-docker run -it --rm shyiko/kubesec-playground:0.1.1 /bin/bash
+docker run -it --rm shyiko/kubesec-playground:0.2.0 /bin/bash
 $ kubesec encrypt secret.yml
 ```
 
