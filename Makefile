@@ -73,7 +73,7 @@ build-docker-image:
 			chmod -R a+rw /tmp/README.md' && \
 	cp -r .ci /tmp/kubesec-playground/ && \
 	cp kubesec-playground.dockerfile /tmp/kubesec-playground/Dockerfile && \
-	bash -c 'cd /tmp/kubesec-playground && docker build -t shyiko/kubesec-playground:${VERSION} .'
+	bash -c 'cd /tmp/kubesec-playground && docker build --build-arg KUBESEC_VERSION=${VERSION} -t shyiko/kubesec-playground:${VERSION} .'
 
 push-docker-image:
 	docker push shyiko/kubesec-playground:${VERSION}

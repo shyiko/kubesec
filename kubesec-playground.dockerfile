@@ -33,7 +33,8 @@ RUN curl -sSL https://github.com/InQuicker/ktmpl/releases/download/0.7.0/ktmpl-0
 RUN curl -sSL https://github.com/mikefarah/yaml/releases/download/1.11/yaml_linux_amd64 -o /usr/local/bin/yaml &&\
     chmod a+x /usr/local/bin/yaml
 
-ENV KUBESEC_VERSION=0.2.0
+ARG KUBESEC_VERSION=unspecified
+ENV KUBESEC_VERSION=$KUBESEC_VERSION
 
 RUN curl -sSL https://github.com/shyiko/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
       bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'\
