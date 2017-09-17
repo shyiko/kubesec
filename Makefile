@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+SHELL := /bin/bash -o pipefail
 VERSION := $(shell git describe --tags --abbrev=0)
 
 fetch:
