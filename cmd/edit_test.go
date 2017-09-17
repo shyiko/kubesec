@@ -85,7 +85,7 @@ func TestKeyChange(t *testing.T) {
 	if string(actual) != expected {
 		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)
 	}
-	ctx, err := reconstructEncryptionContext(actualEncrypted, false)
+	ctx, err := reconstructEncryptionContext(actualEncrypted, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,8 +119,9 @@ func TestEditUnencrypted(t *testing.T) {
 	expected := `data:
   key: ANYTHING
 kind: Secret
-# kubesec:v:1
-# kubesec:pgp:ANYTHING`
+# kubesec:v:3
+# kubesec:pgp:ANYTHING
+# kubesec:mac:ANYTHING`
 	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
 		MatchString(string(actual)) {
 		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)
@@ -140,8 +141,9 @@ func TestEditEncrypted(t *testing.T) {
 	expected := `data:
   key: ANYTHING
 kind: Secret
-# kubesec:v:1
-# kubesec:pgp:ANYTHING`
+# kubesec:v:3
+# kubesec:pgp:ANYTHING
+# kubesec:mac:ANYTHING`
 	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
 		MatchString(string(actual)) {
 		t.Fatalf("actual: %#v != expected: %#v", string(actual), expected)

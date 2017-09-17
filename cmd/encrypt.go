@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -20,9 +21,10 @@ const blockSize = 48
 
 const version = "1"
 const versionWithAWSKMSAndGCPKMSSupport = "2"
+const versionWithMAC = "3"
 
 func IsVersionSupported(v string) bool {
-	return v == version || v == versionWithAWSKMSAndGCPKMSSupport
+	return v == version || v == versionWithAWSKMSAndGCPKMSSupport || v == versionWithMAC
 }
 
 type Key struct {
@@ -69,9 +71,16 @@ const (
 	KTAWSKMS
 )
 
+var KeyTypes = []KeyType{
+	KTPGP,
+	KTGCPKMS,
+	KTAWSKMS,
+}
+
 const (
 	NS        = "# kubesec:"
-	NSVersion = "v:" // v:<version>
+	NSVersion = "v:"   // v:<version>
+	NSMAC     = "mac:" // mac:<mac>
 )
 
 const (
@@ -131,6 +140,7 @@ type EncryptionContext struct {
 	DEK   []byte
 	Keys  Keys
 	Stash map[string]interface{} // IV by data.KEY
+	MAC   string
 }
 
 func (ctx *EncryptionContext) RotateDEK() {
@@ -142,6 +152,10 @@ func (ctx *EncryptionContext) RotateDEK() {
 	}
 	ctx.Keys = updatedKeys
 	ctx.Stash = nil
+}
+
+func (ctx *EncryptionContext) IsEmpty() bool {
+	return len(ctx.DEK) == 0 && len(ctx.Keys) == 0
 }
 
 func IsEncrypted(resource []byte) bool {
@@ -166,19 +180,6 @@ func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
 		}
 		ctx.DEK = key
 	}
-	cipher := aes.Cipher{}
-	data := rs.data()
-	for key, value := range data {
-		mod := len(value) % blockSize
-		if mod != 0 {
-			value += strings.Repeat("\u0000", blockSize-mod)
-		}
-		if encryptedValue, err := cipher.Encrypt(value, ctx.DEK, key, ctx.Stash[key]); err != nil {
-			return nil, err
-		} else {
-			data[key] = encryptedValue
-		}
-	}
 	if ctx.Keys == nil {
 		primaryKey, err := gpg.PrimaryKey()
 		if err != nil {
@@ -186,10 +187,70 @@ func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
 		}
 		ctx.Keys = []KeyWithDEK{{Key{Id: primaryKey.Fingerprint}, nil}}
 	}
+	ctx.MAC = computeMAC(rs, ctx)
+	cipher := aes.Cipher{}
+	data := rs.data()
+	for key, value := range data {
+		mod := len(value) % blockSize
+		if mod != 0 {
+			value += strings.Repeat("\u0000", blockSize-mod)
+		}
+		if encryptedValue, err := cipher.Encrypt(value, ctx.DEK, []byte(key), ctx.Stash[key]); err != nil {
+			return nil, err
+		} else {
+			data[key] = encryptedValue
+		}
+	}
 	return marshalWithEncryptionContext(rs, ctx)
 }
 
 type resource map[interface{}]interface{}
+
+func computeMAC(rs resource, ctx EncryptionContext) string {
+	aad := gatherAdditionalAuthenticatedDataForMAC(rs, ctx)
+	if ctx.MAC != "" {
+		// return same mac if hash hasn't changed
+		_, _, err := aes.Cipher{}.Decrypt(ctx.MAC, ctx.DEK, aad)
+		if err == nil {
+			return ctx.MAC
+		}
+	}
+	mac, err := aes.Cipher{}.Encrypt("", ctx.DEK, aad, nil)
+	if err != nil {
+		panic(err)
+	}
+	return mac
+}
+
+func gatherAdditionalAuthenticatedDataForMAC(rs resource, ctx EncryptionContext) []byte {
+	var hash bytes.Buffer
+	data := rs.data()
+	sortedDataKeys := make([]string, 0, len(data))
+	for key := range data {
+		sortedDataKeys = append(sortedDataKeys, key)
+	}
+	sort.Strings(sortedDataKeys)
+	for _, key := range sortedDataKeys {
+		hash.Write([]byte(key))
+		hash.Write([]byte(data[key]))
+	}
+	sortedKeys := ctx.Keys[:]
+	sort.Sort(sortedKeys)
+	for _, key := range sortedKeys {
+		hash.Write([]byte(key.Id))
+	}
+	return hash.Bytes()
+}
+
+func validateMAC(rs resource, ctx EncryptionContext) error {
+	aad := gatherAdditionalAuthenticatedDataForMAC(rs, ctx)
+	_, _, err := aes.Cipher{}.Decrypt(ctx.MAC, ctx.DEK, aad)
+	if err != nil {
+		return errors.New("MACs don't match.\n" +
+			"Use `kubesec edit -i --recompute-mac <file>` to review & confirm content of the Secret.")
+	}
+	return nil
+}
 
 func (rs resource) data() map[string]string {
 	data := rs["data"]
@@ -232,13 +293,7 @@ func marshal(rs resource) ([]byte, error) {
 }
 
 func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, error) {
-	var v string
-	if ctx.Keys.IndexByType(KTGCPKMS) != -1 || ctx.Keys.IndexByType(KTAWSKMS) != -1 {
-		v = versionWithAWSKMSAndGCPKMSSupport
-	} else {
-		v = version
-	}
-	footer := []string{NS + NSVersion + v + "\n"}
+	footer := []string{NS + NSVersion + versionWithMAC + "\n"}
 	sort.Sort(ctx.Keys)
 	for _, key := range ctx.Keys {
 		if key.EncryptedDEK == nil {
@@ -255,6 +310,7 @@ func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+	footer = append(footer, NS+NSMAC+ctx.MAC+"\n")
 	return append(body, []byte(strings.Join(footer, ""))...), nil
 }
 

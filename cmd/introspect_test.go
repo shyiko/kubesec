@@ -31,7 +31,7 @@ func TestIntrospect(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, err := reconstructEncryptionContext(encrypted, false)
+	ctx, err := reconstructEncryptionContext(encrypted, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}

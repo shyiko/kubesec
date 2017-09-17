@@ -26,11 +26,11 @@ type stashedValue struct {
 	plaintext string
 }
 
-func (c Cipher) Decrypt(value string, key []byte, path string) (plaintext string, stash interface{}, err error) {
-	if value == "" {
+func (c Cipher) Decrypt(ciphertext string, key []byte, aad []byte) (plaintext string, stash interface{}, err error) {
+	if ciphertext == "" && len(aad) == 0 {
 		return "", nil, nil
 	}
-	encryptedValue, err := parse(value)
+	encryptedValue, err := parse(ciphertext)
 	if err != nil {
 		return "", nil, err
 	}
@@ -44,7 +44,7 @@ func (c Cipher) Decrypt(value string, key []byte, path string) (plaintext string
 	}
 	stashValue := stashedValue{iv: encryptedValue.iv}
 	data := append(encryptedValue.data, encryptedValue.tag...)
-	decryptedBytes, err := gcm.Open(nil, encryptedValue.iv, data, []byte(path))
+	decryptedBytes, err := gcm.Open(nil, encryptedValue.iv, data, aad)
 	if err != nil {
 		return "", nil, fmt.Errorf("Could not decrypt with AES_GCM: %s", err)
 	}
@@ -55,6 +55,9 @@ func (c Cipher) Decrypt(value string, key []byte, path string) (plaintext string
 
 func parse(value string) (*encryptedValue, error) {
 	chunks := strings.Split(value, ".")
+	if len(chunks) == 2 { // GMAC
+		chunks = append([]string{""}, chunks...)
+	}
 	if len(chunks) != 3 {
 		return nil, fmt.Errorf("Unrecognized format of %s", value)
 	}
@@ -66,7 +69,7 @@ func parse(value string) (*encryptedValue, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error base64-decoding iv: %s", err)
 	}
-	if len(iv) != gcmNonceSize { // go/src/crypto/cipher/gcm.go (gcmStandardNonceSize)
+	if len(iv) != gcmNonceSize {
 		return nil, fmt.Errorf("Unexpected iv: %s", err)
 	}
 	tag, err := base64.StdEncoding.DecodeString(chunks[2])
@@ -76,8 +79,8 @@ func parse(value string) (*encryptedValue, error) {
 	return &encryptedValue{data, iv, tag}, nil
 }
 
-func (c Cipher) Encrypt(value string, key []byte, path string, stash interface{}) (string, error) {
-	if value == "" {
+func (c Cipher) Encrypt(plaintext string, key []byte, aad []byte, stash interface{}) (string, error) {
+	if plaintext == "" && len(aad) == 0 {
 		return "", nil
 	}
 	aescipher, err := cryptoaes.NewCipher(key)
@@ -85,7 +88,7 @@ func (c Cipher) Encrypt(value string, key []byte, path string, stash interface{}
 		return "", fmt.Errorf("Could not initialize AES cipher: %s", err)
 	}
 	var iv []byte
-	if stash, ok := stash.(stashedValue); !ok || stash.plaintext != value {
+	if stash, ok := stash.(stashedValue); !ok || stash.plaintext != plaintext {
 		iv = make([]byte, gcmNonceSize)
 		_, err = rand.Read(iv)
 		if err != nil {
@@ -98,13 +101,12 @@ func (c Cipher) Encrypt(value string, key []byte, path string, stash interface{}
 	if err != nil {
 		return "", fmt.Errorf("Could not create GCM: %s", err)
 	}
-	out := gcm.Seal(nil, iv, []byte(value), []byte(path))
+	out := gcm.Seal(nil, iv, []byte(plaintext), aad)
 	data, tag := out[:len(out)-cryptoaes.BlockSize], out[len(out)-cryptoaes.BlockSize:]
-	return strings.Join(
-		[]string{
-			base64.StdEncoding.EncodeToString(data),
-			base64.StdEncoding.EncodeToString(iv),
-			base64.StdEncoding.EncodeToString(tag),
-		},
-		"."), nil
+	chunks := []string{
+		base64.StdEncoding.EncodeToString(data),
+		base64.StdEncoding.EncodeToString(iv),
+		base64.StdEncoding.EncodeToString(tag),
+	}
+	return strings.TrimPrefix(strings.Join(chunks, "."), "."), nil
 }

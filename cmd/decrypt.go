@@ -13,6 +13,20 @@ import (
 )
 
 func Decrypt(resource []byte) ([]byte, *EncryptionContext, error) {
+	rs, ctx, err := decrypt(resource, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !ctx.IsEmpty() {
+		if err := validateMAC(rs, *ctx); err != nil {
+			return nil, nil, err
+		}
+	}
+	output, err := marshal(rs)
+	return output, ctx, err
+}
+
+func decrypt(resource []byte, ignoreMissingMAC bool) (resource, *EncryptionContext, error) {
 	rs, err := unmarshal(resource)
 	if err != nil {
 		return nil, nil, err
@@ -20,13 +34,13 @@ func Decrypt(resource []byte) ([]byte, *EncryptionContext, error) {
 	data := rs.data()
 	ctx := &EncryptionContext{}
 	if len(data) != 0 {
-		ctx, err = reconstructEncryptionContext(resource, true)
+		ctx, err = reconstructEncryptionContext(resource, true, ignoreMissingMAC)
 		if err != nil {
 			return nil, nil, err
 		}
 		cipher := aes.Cipher{}
 		for key, value := range data {
-			if decryptedValue, stash, err := cipher.Decrypt(value, ctx.DEK, key); err == nil {
+			if decryptedValue, stash, err := cipher.Decrypt(value, ctx.DEK, []byte(key)); err == nil {
 				padding := strings.Index(decryptedValue, "\u0000")
 				if padding != -1 {
 					decryptedValue = decryptedValue[:padding]
@@ -38,13 +52,13 @@ func Decrypt(resource []byte) ([]byte, *EncryptionContext, error) {
 			}
 		}
 	}
-	output, err := marshal(rs)
-	return output, ctx, err
+	return rs, ctx, err
 }
 
-func reconstructEncryptionContext(resource []byte, decryptDEK bool) (*EncryptionContext, error) {
+func reconstructEncryptionContext(resource []byte, decryptDEK bool, ignoreMissingMAC bool) (*EncryptionContext, error) {
 	loadPGPKey := lazyLoadPGPKey()
 	ctx := EncryptionContext{Stash: make(map[string]interface{})}
+	var v string
 	for i, line := range strings.Split(string(resource), "\n") {
 		if strings.HasPrefix(line, NS) {
 			split := strings.Split(line[len(NS):], ":")
@@ -53,9 +67,11 @@ func reconstructEncryptionContext(resource []byte, decryptDEK bool) (*Encryption
 			}
 			switch split[0] + ":" {
 			case NSVersion:
-				if !IsVersionSupported(split[1]) {
+				v = split[1]
+				if !IsVersionSupported(v) {
 					return nil, errors.New(fmt.Sprintf(
-						"Secret was encrypted with a newer version of kubesec (https://github.com/shyiko/kubesec)",
+						"It appears that Secret was encrypted with newer version of kubesec.\n" +
+							"Visit https://github.com/shyiko/kubesec for upgrade instructions.",
 					))
 				}
 			case NSPGP:
@@ -64,6 +80,8 @@ func reconstructEncryptionContext(resource []byte, decryptDEK bool) (*Encryption
 				loadGCPKMSKey(i+1, &ctx, decryptDEK, split[1:])
 			case NSAWSKMS:
 				loadAWSKMSKey(i+1, &ctx, decryptDEK, split[1:])
+			case NSMAC:
+				ctx.MAC = split[1]
 			default:
 				return nil, errors.New(fmt.Sprintf("Unexpected value (line %v)", i+1))
 			}
@@ -74,6 +92,16 @@ func reconstructEncryptionContext(resource []byte, decryptDEK bool) (*Encryption
 			return nil, errors.New("Unable to decrypt Data Encryption Key (DEK)")
 		}
 		return nil, errors.New("\"data\" isn't encrypted")
+	}
+	if !ignoreMissingMAC && ctx.MAC == "" {
+		if v == version || v == versionWithAWSKMSAndGCPKMSSupport {
+			return nil, errors.New(
+				"It appears that Secret was encrypted with older version of kubesec (MAC is missing).\n" +
+					"Use `kubesec edit -i --recompute-mac <file>` to review & confirm content of the Secret.",
+			)
+		} else {
+			return nil, errors.New("MAC is missing")
+		}
 	}
 	return &ctx, nil
 }

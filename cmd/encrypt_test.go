@@ -91,9 +91,10 @@ func TestEncryptKeyAdd(t *testing.T) {
 	fps := []string{primaryKey.Fingerprint, anotherFP}
 	sort.Strings(fps)
 	expected := "data:\n  key: ANYTHING\nkind: Secret\n" + strings.Join([]string{
-		"# kubesec:v:1",
+		"# kubesec:v:3",
 		"# kubesec:pgp:" + fps[0] + ":ANYTHING",
 		"# kubesec:pgp:" + fps[1] + ":ANYTHING",
+		"# kubesec:mac:ANYTHING",
 	}, "\n") + "\n"
 	if !regexp.MustCompile(strings.Replace(regexp.QuoteMeta(expected), "ANYTHING", "[^\\n]*", -1)).
 		MatchString(string(actual)) {
@@ -140,7 +141,7 @@ func TestEncryptKeyRemove(t *testing.T) {
 	}); err != nil {
 		t.Fail()
 	} else {
-		ctx, err := reconstructEncryptionContext(encrypted, false)
+		ctx, err := reconstructEncryptionContext(encrypted, false, false)
 		if err != nil {
 			t.Fatal(err)
 		}

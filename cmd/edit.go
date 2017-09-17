@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -18,15 +17,27 @@ type EditOpt struct {
 	Rotate         bool
 	KeySetMutation KeySetMutation
 	Editor         string
+	RecomputeMAC   bool
 }
 
 func Edit(content []byte, opt EditOpt) ([]byte, error) {
 	input := content
 	ctx := &EncryptionContext{}
+	var rs resource
 	var err error
 	inputEncrypted := IsEncrypted(content)
+	var macValid bool
 	if inputEncrypted {
-		input, ctx, err = Decrypt(content)
+		rs, ctx, err = decrypt(content, opt.RecomputeMAC)
+		if err != nil {
+			return nil, err
+		}
+		macValid = ctx.IsEmpty() || validateMAC(rs, *ctx) == nil
+		if !macValid && !opt.RecomputeMAC {
+			return nil, errors.New("MACs don't match.\n" +
+				"Use `kubesec edit -i --recompute-mac <file>` to review & confirm content of the Secret.")
+		}
+		input, err = marshal(rs)
 		if err != nil {
 			return nil, err
 		}
@@ -38,6 +49,24 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 		if input, err = transform(input, decodeBase64Data); err != nil {
 			return nil, err
 		}
+	}
+	if !macValid {
+		keys, err := listKeys(ctx)
+		if err != nil {
+			return nil, err
+		}
+		input = append([]byte(strings.Join([]string{
+			"#",
+			"# WARNING: MACs don't match!",
+			"# (please review the content (and the keys!) before saving)",
+			"#",
+			"# Included key(s):",
+			"#",
+			"# " + strings.Join(keys, "\n# "),
+			"#",
+			"# (comments are automatically stripped away)",
+			"#\n",
+		}, "\n")), input...)
 	}
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -52,9 +81,6 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 	output, err := ioutil.ReadFile(tmp.Name())
 	if err != nil {
 		return nil, err
-	}
-	if inputEncrypted && bytes.Equal(input, output) && opt.KeySetMutation.IsEmpty() {
-		return content, nil
 	}
 	if !opt.Base64 {
 		if output, err = transform(output, encodeDataToBase64); err != nil {
@@ -74,6 +100,31 @@ func transform(data []byte, cb func(rs *resource) error) ([]byte, error) {
 		return nil, err
 	}
 	return marshal(rs)
+}
+
+func listKeys(ctx *EncryptionContext) ([]string, error) {
+	var res []string
+	for _, keyType := range KeyTypes {
+		list, err := listKeysByKeyType(ctx, keyType)
+		if err != nil {
+			return nil, err
+		}
+		var prefix string
+		switch keyType {
+		case KTPGP:
+			prefix = "PGP: "
+		case KTGCPKMS:
+			prefix = "GCP KMS: "
+		case KTAWSKMS:
+			prefix = "AWS KMS: "
+		default:
+			panic(fmt.Sprintf("Unexpected Key.Type %v", keyType))
+		}
+		for _, value := range list {
+			res = append(res, prefix+value)
+		}
+	}
+	return res, nil
 }
 
 func decodeBase64Data(rs *resource) error {

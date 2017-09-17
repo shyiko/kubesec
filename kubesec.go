@@ -122,9 +122,10 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
+			recomputeMAC, _ := cmd.Flags().GetBool("recompute-mac")
 			base64, _ := cmd.Flags().GetBool("base64")
 			rotate, _ := cmd.Flags().GetBool("rotate")
-			return kubesec.Edit(resource, kubesec.EditOpt{Base64: base64, Rotate: rotate, KeySetMutation: *keySet})
+			return kubesec.Edit(resource, kubesec.EditOpt{Base64: base64, Rotate: rotate, KeySetMutation: *keySet, RecomputeMAC: recomputeMAC})
 		}),
 		Example: "  kubesec edit secret.yml\n" +
 			"  cat secret.yml | kubesec edit -",
@@ -132,6 +133,7 @@ func main() {
 	editCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
+	editCmd.Flags().Bool("recompute-mac", false, "Recompute MAC")
 	editCmd.Flags().BoolP("rotate", "r", false, "Rotate Data Encryption Key")
 	editCmd.Flags().BoolP("base64", "b", false, "Keep values in Base64 (by default values are decoded before being passed to the $EDITOR (and then re-encoded on save))")
 	editCmd.Flags().BoolP("force", "f", false, "Create Secret if it doesn't exist")
