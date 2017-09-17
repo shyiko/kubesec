@@ -330,7 +330,7 @@ ktmpl k8s/template.yml -f k8s/deployment/minikube.yml -p IMAGE debian:jessie | k
 (each value is padded to a block-size (48 bytes by default) and then encrypted using a shared (resource-unique, randomly generated) 256-bit DEK & a 96-bit random IV).
 - DEK is encrypted (and signed in case of PGP) with `--key`(s) before being stored in a Secret as `# kubesec:<key type>:<key id>:...` (one entry for each `--key`).
 
-In addition to the above, kubesec also generates MAC (AES-GMAC, covering both "data" and `--key`(s)). If MAC is missing or invalid - 
+In addition to the above, kubesec also generates MAC (AES-GMAC, with AAD constructed from both the "data" and the `--key`(s)). If MAC is missing or invalid - 
 decryption will fail (`kubesec edit -i --recompute-mac <file>` can be used to recompute MAC when necessary (e.g. after `git merge`)).  
 
 ## Reporting Security Issues
