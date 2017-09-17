@@ -30,7 +30,7 @@ func Merge(source []byte, target []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return Encrypt(rs, *ctx)
+	return EncryptWithContext(rs, *ctx)
 }
 
 func (rs resource) containsAllDataOf(other resource) bool {

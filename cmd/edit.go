@@ -88,7 +88,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 		}
 	}
 	opt.KeySetMutation.applyTo(ctx)
-	return Encrypt(output, *ctx)
+	return EncryptWithContext(output, *ctx)
 }
 
 func transform(data []byte, cb func(rs *resource) error) ([]byte, error) {

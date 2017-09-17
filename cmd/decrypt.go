@@ -26,6 +26,15 @@ func Decrypt(resource []byte) ([]byte, *EncryptionContext, error) {
 	return output, ctx, err
 }
 
+func DecryptCleartext(resource []byte) ([]byte, *EncryptionContext, error) {
+	plaintext, ctx, err := Decrypt(resource)
+	if err != nil {
+		return nil, nil, err
+	}
+	plaintext, err = transform(plaintext, decodeBase64Data)
+	return plaintext, ctx, err
+}
+
 func decrypt(resource []byte, ignoreMissingMAC bool) (resource, *EncryptionContext, error) {
 	rs, err := unmarshal(resource)
 	if err != nil {

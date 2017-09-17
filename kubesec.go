@@ -93,12 +93,17 @@ func main() {
 		Aliases: []string{"e"},
 		Short:   "Encrypt a Secret (or re-encrypt, possibly with a different set of keys)",
 		Long:    "Re/Encrypt a Secret",
-		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
+		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) (data []byte, err error) {
 			keySet, err := buildKeySet()
 			if err != nil {
 				return nil, err
 			}
-			return kubesec.EncryptWithKeySetMutation(resource, *keySet)
+			if cleartext, _ := cmd.Flags().GetBool("cleartext"); cleartext {
+				data, err = kubesec.EncryptCleartext(resource, *keySet)
+			} else {
+				data, err = kubesec.Encrypt(resource, *keySet)
+			}
+			return
 		}),
 		Example: "  kubesec encrypt secret.yml\n\n" +
 			"  # same as above but output is written back to secret.yml (instead of stdout)\n" +
@@ -113,6 +118,23 @@ func main() {
 	encryptCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
+	encryptCmd.Flags().Bool("cleartext", false, "base64-encode \"data\"")
+	decryptCmd := &cobra.Command{
+		Use:     "decrypt [file]",
+		Aliases: []string{"d"},
+		Short:   "Decrypt a Secret",
+		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) (data []byte, err error) {
+			if cleartext, _ := cmd.Flags().GetBool("cleartext"); cleartext {
+				data, _, err = kubesec.DecryptCleartext(resource)
+			} else {
+				data, _, err = kubesec.Decrypt(resource)
+			}
+			return
+		}),
+		Example: "  kubesec decrypt secret.yml\n" +
+			"  cat secret.yml | kubesec decrypt -",
+	}
+	decryptCmd.Flags().Bool("cleartext", false, "base64-decode \"data\"")
 	editCmd := &cobra.Command{
 		Use:     "edit [file]",
 		Aliases: []string{"ee"},
@@ -139,17 +161,7 @@ func main() {
 	editCmd.Flags().BoolP("force", "f", false, "Create Secret if it doesn't exist")
 	rootCmd.AddCommand(
 		encryptCmd,
-		&cobra.Command{
-			Use:     "decrypt [file]",
-			Aliases: []string{"d"},
-			Short:   "Decrypt a Secret",
-			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
-				data, _, err := kubesec.Decrypt(resource)
-				return data, err
-			}),
-			Example: "  kubesec decrypt secret.yml\n" +
-				"  cat secret.yml | kubesec decrypt -",
-		},
+		decryptCmd,
 		editCmd,
 		&cobra.Command{
 			Use:     "merge [source] [target]",

@@ -16,14 +16,14 @@ func TestEncryptMalformed(t *testing.T) {
 		`{"kind": "Secret", "data": ""}`,
 		`{"kind": "Secret", "data": {key: 0}}`,
 	} {
-		if _, err := Encrypt([]byte(rs), EncryptionContext{}); err == nil {
+		if _, err := EncryptWithContext([]byte(rs), EncryptionContext{}); err == nil {
 			t.Error(rs)
 		}
 	}
 }
 
 func TestEncryptGivenEmptyData(t *testing.T) {
-	actual, err := Encrypt([]byte(`{"kind": "Secret"}`), EncryptionContext{})
+	actual, err := EncryptWithContext([]byte(`{"kind": "Secret"}`), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestEncryptGivenEmptyData(t *testing.T) {
 }
 
 func TestEncrypt(t *testing.T) {
-	actual, err := Encrypt([]byte(`{"kind": "Secret", "data": {"key": "value"}}`), EncryptionContext{})
+	actual, err := EncryptWithContext([]byte(`{"kind": "Secret", "data": {"key": "value"}}`), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestKeyRotation(t *testing.T) {
 
 func TestEncryptKeyAdd(t *testing.T) {
 	input := "data:\n  key: value\nkind: Secret\n"
-	encrypted, err := Encrypt([]byte(input), EncryptionContext{})
+	encrypted, err := EncryptWithContext([]byte(input), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestEncryptKeyAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 	anotherFP := "72ECF46A56B4AD39C907BBB71646B01B86E50310"
-	actual, err := EncryptWithKeySetMutation(encrypted, KeySetMutation{Add: []Key{{KTPGP, anotherFP}}})
+	actual, err := Encrypt(encrypted, KeySetMutation{Add: []Key{{KTPGP, anotherFP}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestEncryptKeyAdd(t *testing.T) {
 
 /*
 func TestFingerprintRemoveLastOne(t *testing.T) {
-	encrypted, err := Encrypt([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{})
+	encrypted, err := EncryptWithContext([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +112,7 @@ func TestFingerprintRemoveLastOne(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := EncryptWithKeySetMutation(encrypted, KeySetMutation{Remove:[]string{primaryKey.ID}}); err == nil {
+	if _, err := Encrypt(encrypted, KeySetMutation{Remove:[]string{primaryKey.ID}}); err == nil {
 		t.Fail()
 	}
 }
@@ -127,7 +127,7 @@ func TestEncryptKeyRemove(t *testing.T) {
 		primaryKey.Fingerprint,
 		"72ECF46A56B4AD39C907BBB71646B01B86E50310",
 	}
-	encrypted, err := Encrypt([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{
+	encrypted, err := EncryptWithContext([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{
 		Keys: Keys{
 			KeyWithDEK{Key{KTPGP, expected[0]}, nil},
 			KeyWithDEK{Key{KTPGP, expected[1]}, nil},
@@ -136,7 +136,7 @@ func TestEncryptKeyRemove(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if encrypted, err := EncryptWithKeySetMutation(encrypted, KeySetMutation{
+	if encrypted, err := Encrypt(encrypted, KeySetMutation{
 		Remove: []Key{{KTPGP, expected[1]}},
 	}); err != nil {
 		t.Fail()
@@ -156,7 +156,7 @@ func TestEncryptKeyRemove(t *testing.T) {
 }
 
 func TestEncryptWithMissingKey(t *testing.T) {
-	if _, err := Encrypt([]byte(`{"kind": "Secret"}`), EncryptionContext{
+	if _, err := EncryptWithContext([]byte(`{"kind": "Secret"}`), EncryptionContext{
 		Keys: Keys{
 			KeyWithDEK{Key{KTPGP, "B90F6449FEBC20F00DB13ED8212659B22565CA8"}, nil},
 		},

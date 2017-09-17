@@ -162,7 +162,7 @@ func IsEncrypted(resource []byte) bool {
 	return strings.Index(string(resource), "\n"+NS+NSVersion) != -1
 }
 
-func Encrypt(resource []byte, ctx EncryptionContext) ([]byte, error) {
+func EncryptWithContext(resource []byte, ctx EncryptionContext) ([]byte, error) {
 	rs, err := unmarshal(resource)
 	if err != nil {
 		return nil, err
@@ -374,15 +374,29 @@ func (ks KeySetMutation) applyTo(ctx *EncryptionContext) {
 	}
 }
 
-func EncryptWithKeySetMutation(resource []byte, mutation KeySetMutation) ([]byte, error) {
+func Encrypt(resource []byte, mutation KeySetMutation) ([]byte, error) {
+	return encryptWithKeySet(resource, mutation, false)
+}
+
+func EncryptCleartext(resource []byte, mutation KeySetMutation) ([]byte, error) {
+	return encryptWithKeySet(resource, mutation, true)
+}
+
+func encryptWithKeySet(resource []byte, mutation KeySetMutation, cleartext bool) ([]byte, error) {
+	var err error
 	ctx := &EncryptionContext{}
 	if IsEncrypted(resource) {
-		var err error
 		resource, ctx, err = Decrypt(resource)
 		if err != nil {
 			return nil, err
 		}
 	}
+	if cleartext {
+		resource, err = transform(resource, encodeDataToBase64)
+		if err != nil {
+			return nil, err
+		}
+	}
 	mutation.applyTo(ctx)
-	return Encrypt(resource, *ctx)
+	return EncryptWithContext(resource, *ctx)
 }

@@ -11,7 +11,7 @@ import (
 
 func TestEncryptDecrypt(t *testing.T) {
 	expected := "data:\n  key: dmFsdWU=\nkind: Secret\n"
-	encrypted, err := Encrypt([]byte(expected), EncryptionContext{})
+	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func TestEncryptDecrypt(t *testing.T) {
 
 func TestEncryptDecryptDifferentKey(t *testing.T) {
 	expected := "data:\n  key: dmFsdWU=\nkind: Secret\n"
-	encrypted, err := Encrypt([]byte(expected), EncryptionContext{
+	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{
 		Keys: Keys{
 			KeyWithDEK{Key{KTPGP, "72ECF46A56B4AD39C907BBB71646B01B86E50310"}, nil},
 		},
@@ -59,7 +59,7 @@ func TestKeyChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	encrypted, err := Encrypt([]byte(expected), EncryptionContext{
+	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{
 		Keys: Keys{
 			KeyWithDEK{Key{KTPGP, pgpKey.Fingerprint}, nil},
 			KeyWithDEK{Key{KTAWSKMS, awsKMSKey}, nil},
@@ -130,7 +130,7 @@ kind: Secret
 
 func TestEditEncrypted(t *testing.T) {
 	os.Setenv("EDITOR", "true")
-	encrypted, err := Encrypt([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EncryptionContext{})
+	encrypted, err := EncryptWithContext([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}

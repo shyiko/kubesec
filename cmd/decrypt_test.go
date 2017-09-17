@@ -30,7 +30,7 @@ func TestDecryptGivenEmptyData(t *testing.T) {
 
 func TestDecrypt(t *testing.T) {
 	expected := "data:\n  KEY: dmFsdWUK\nkind: Secret\n"
-	encrypted, err := Encrypt([]byte(expected), EncryptionContext{})
+	encrypted, err := EncryptWithContext([]byte(expected), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
