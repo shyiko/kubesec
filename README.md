@@ -104,17 +104,17 @@ kubesec encrypt --key=+pgp:160A7A9CF46221A56B06AD64461A804F2609FD89 \
 cat secret.yml | kubesec encrypt -
 
 # decrypt a Secret 
-# (usually combined with kubectl (`kubesec decrypt secret.yml | kubectl apply -f -`))
-kubesec decrypt secret.yml 
+# (usually combined with kubectl (`kubesec decrypt secret.enc.yml | kubectl apply -f -`))
+kubesec decrypt secret.enc.yml 
 
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
-kubesec edit -i secret.yml
-kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.yml
-# same as above but secret.yml will be created if it doesn't exist 
-kubesec edit -if secret.yml
+kubesec edit -i secret.enc.yml
+kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.enc.yml
+# same as above but secret.enc.yml will be created if it doesn't exist 
+kubesec edit -if secret.enc.yml
 
 # show information about the Secret (who has access to the "data", last modification date, etc)
-kubesec introspect secret.yml
+kubesec introspect secret.enc.yml
 ```
 
 > `-` can be used anywhere (where a file is expected) to reference `stdin`.  
@@ -126,7 +126,7 @@ If you have `docker` installed you don't need to download `kubesec` binary just 
 Instead, launch a container and start playing: 
 
 ```sh
-docker run -it --rm shyiko/kubesec-playground:0.3.0 /bin/bash
+docker run -it --rm shyiko/kubesec-playground:0.3.0-with-kubetpl-0.1.0 /bin/bash
 $ kubesec encrypt secret.yml
 ```
 
@@ -145,15 +145,14 @@ how to generate one.
 ```sh
 echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"myapp-stable-0"},"type":"Opaque",
   "data":{"KEY":"dmFsdWUK","ANOTHER_KEY":"YW5vdGhlcl92YWx1ZQo="}}' | 
-  kubesec encrypt > secret.yml
-kubesec edit -i secret.yml 
-kubesec decrypt secret.yml | kubectl apply -f - 
+  kubesec encrypt -o secret.enc.yml
+kubesec edit -i secret.enc.yml 
+kubesec decrypt secret.enc.yml | kubectl apply -f - 
 ```
 
 #### #2 (client-side templating)
 
-> To keep things simple, we'll use [ktmpl](https://github.com/InQuicker/ktmpl) (template format is described in [this design proposal](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/templates.md)).  
-You are free to choose a different one (e.g. [helm-template](https://github.com/technosophos/helm-template)). 
+> We'll use [kubetpl](https://github.com/shyiko/kubetpl), `kind: Template` flavour. You are free to choose any other format (or tool).    
 
 Let's say we have the following (click to expand):
 
@@ -191,29 +190,29 @@ parameters:
 - name: NAME
   description: Application name
   required: true
-  parameterType: string
+  type: string
 - name: INSTANCE
   description: >
     Instance ID (used to distinguish between multiple instances (stable, canary, etc.) of the same 
     app within the same namespace)
   value: default
   required: true
-  parameterType: string
+  type: string
 - name: SECRET_REF
   description: > 
     Unique secret identifier (in can be anything, like a monotonic counter or a SHA-2 of the 
     previous SECRET_REF) (used to distinguish between different versions of the same secret)
   required: true
-  parameterType: string  
+  type: string  
 - name: IMAGE
   description: image (e.g. debian:jessie)
   required: true
-  parameterType: string
+  type: string
 - name: IMAGE_PULL_POLICY
   description: Image Pull Policy (e.g. IfNotPresent, Always, etc)
   value: IfNotPresent
   required: true
-  parameterType: string
+  type: string
 ```
 
 </details>
@@ -239,52 +238,51 @@ parameters:
 - name: NAME
   description: Application name
   required: true
-  parameterType: string
+  type: string
 - name: INSTANCE
   description: >
     Instance ID (used to distinguish between multiple instances (stable, canary, etc.) of the same 
     app within the same namespace)
   value: default
   required: true
-  parameterType: string
+  type: string
 - name: SECRET_REF
   description: > 
     Unique secret identifier (in can be anything, like a monotonic counter or a SHA-2 of the 
     previous SECRET_REF) (used to distinguish between different versions of the same secret)
   required: true
-  parameterType: string
+  type: string
 ```
 
 </details>
 <details>
-  <summary>&lt;project_dir&gt;/k8s/deployment/minikube.yml (context-specific configuration; you'll probably have other files like 
-           &lt;project_dir&gt;/k8s/deployment/gke.yml, &lt;project_dir&gt;/k8s/deployment/gke-staging.yml, etc)</summary>
+  <summary>&lt;project_dir&gt;/k8s/staging.env.yml</summary>
            
 ```yml
-# snippet:k8s/deployment/minikube.yml
+# snippet:k8s/staging.env.yml
 NAME: myapp
-SECRET_REF: "0"
+SECRET_REF: 0
 ```
 
 </details>
 <p><p>
 
-> BTW, all these files (+ `ktmpl`) are included in `shyiko/kubesec-playground` docker image [#playground](#playground).
+> BTW, all these files (+ `kubetpl`) are included in `shyiko/kubesec-playground` docker image [#playground](#playground).
 
 Let's start by creating a `Secret` and deploying an app.
 
 ```sh
 # create Secret
-ktmpl k8s/template.secret.yml -f k8s/deployment/minikube.yml | 
-  kubesec encrypt -o k8s/deployment/minikube.secret.yml
-kubesec edit -i k8s/deployment/minikube.secret.yml
-kubesec decrypt k8s/deployment/minikube.secret.yml | kubectl apply -f -
+kubetpl render k8s/template.secret.yml -i k8s/staging.env.yml | 
+  kubesec encrypt -o k8s/staging.secret.enc.yml
+kubesec edit -i k8s/staging.secret.enc.yml
+kubesec decrypt k8s/staging.secret.enc.yml | kubectl apply -f -
 
 # deploy app
-ktmpl k8s/template.yml -f k8s/deployment/minikube.yml -p IMAGE debian:jessie | kubectl apply -f -
+kubetpl render k8s/template.yml -i k8s/staging.env.yml -s IMAGE=debian:jessie | kubectl apply -f -
 ```
 
-At this point `k8s/deployment/minikube.secret.yml` should look something like:  
+At this point `k8s/staging.secret.enc.yml` should look something like:  
 
 ```yml
 apiVersion: v1
@@ -297,7 +295,7 @@ data:
   PASSWORD: iOy1nf90+M6FrrEIoymN6cOSUYM=.E...=.q...=
 # ...  
 ```    
-> (this is probably a good time to commit `k8s/deployment/minikube.secret.yml` to the VCS)
+> (this is probably a good time to commit `k8s/staging.secret.enc.yml` to the VCS)
 
 Alright, imagine we need to change USERNAME.   
 
@@ -309,19 +307,19 @@ to copy-paste).
  
 ```sh
 # update SECRET_REF
-# either open k8s/deployment/minikube.yml in your $EDITOR of choice and make the change manually
+# either open k8s/staging.env.yml in your $EDITOR of choice and make the change manually
 # or "Use the Force, Luke" (https://github.com/mikefarah/yaml)
-yaml w -i k8s/deployment/minikube.yml \
-  SECRET_REF $(cat k8s/deployment/minikube.yml | openssl sha256 | cut -d\  -f2 | cut -c 1-32) 
+yaml w -i k8s/staging.env.yml \
+  SECRET_REF $(cat k8s/staging.env.yml | openssl sha256 | cut -d\  -f2 | cut -c 1-32) 
 
 # update Secret
-ktmpl k8s/template.secret.yml -f k8s/deployment/minikube.yml |
-  kubesec merge k8s/deployment/minikube.secret.yml - -o k8s/deployment/minikube.secret.yml 
-kubesec edit -i k8s/deployment/minikube.secret.yml # if needed
-kubesec decrypt k8s/deployment/minikube.secret.yml | kubectl apply -f -
+kubetpl render k8s/template.secret.yml -i k8s/staging.env.yml |
+  kubesec merge k8s/staging.secret.enc.yml - -o k8s/staging.secret.enc.yml 
+kubesec edit -i k8s/staging.secret.enc.yml # if needed
+kubesec decrypt k8s/staging.secret.enc.yml | kubectl apply -f -
 
 # re-deploy app
-ktmpl k8s/template.yml -f k8s/deployment/minikube.yml -p IMAGE debian:jessie | kubectl apply -f -
+kubetpl render k8s/template.yml -i k8s/staging.env.yml -s IMAGE=debian:jessie | kubectl apply -f -
 ```
 
 ## Encryption Protocol
