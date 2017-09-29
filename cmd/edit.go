@@ -50,6 +50,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 			return nil, err
 		}
 	}
+	opt.KeySetMutation.applyTo(ctx)
 	if !macValid {
 		keys, err := listKeys(ctx)
 		if err != nil {
@@ -87,7 +88,6 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 			return nil, err
 		}
 	}
-	opt.KeySetMutation.applyTo(ctx)
 	return EncryptWithContext(output, *ctx)
 }
 
