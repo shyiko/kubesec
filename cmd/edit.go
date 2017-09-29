@@ -26,7 +26,7 @@ func Edit(content []byte, opt EditOpt) ([]byte, error) {
 	var rs resource
 	var err error
 	inputEncrypted := IsEncrypted(content)
-	var macValid bool
+	macValid := true
 	if inputEncrypted {
 		rs, ctx, err = decrypt(content, opt.RecomputeMAC)
 		if err != nil {
