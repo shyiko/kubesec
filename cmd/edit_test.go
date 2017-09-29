@@ -38,7 +38,7 @@ func TestEncryptDecryptDifferentKey(t *testing.T) {
 		t.Fail()
 	} else {
 		actual := err.Error()
-		expected := "Unable to decrypt Data Encryption Key (DEK)"
+		expected := "Unable to decrypt Data Encryption Key (DEK) (re-run with --debug flag to get more details)"
 		if actual != expected {
 			t.Fatalf("actual: %#v != expected: %#v", actual, expected)
 		}
