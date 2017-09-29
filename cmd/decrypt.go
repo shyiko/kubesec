@@ -98,7 +98,11 @@ func reconstructEncryptionContext(resource []byte, decryptDEK bool, ignoreMissin
 	}
 	if decryptDEK && ctx.DEK == nil {
 		if IsEncrypted(resource) {
-			return nil, errors.New("Unable to decrypt Data Encryption Key (DEK)")
+			hint := ""
+			if log.GetLevel() != log.DebugLevel {
+				hint = " (re-run with --debug flag to get more details)"
+			}
+			return nil, errors.New("Unable to decrypt Data Encryption Key (DEK)" + hint)
 		}
 		return nil, errors.New("\"data\" isn't encrypted")
 	}
