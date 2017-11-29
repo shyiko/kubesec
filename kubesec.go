@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/go-errors/errors"
 	kubesec "github.com/shyiko/kubesec/cmd"
 	"github.com/shyiko/kubesec/gpg"
 	"github.com/spf13/cobra"
