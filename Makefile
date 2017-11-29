@@ -76,6 +76,6 @@ build-docker-image:
 	KUBETPL_VERSION=0.1.0 bash -c 'cd /tmp/kubesec-playground && docker build --build-arg KUBETPL_VERSION=$$KUBETPL_VERSION --build-arg KUBESEC_VERSION=${VERSION} -t shyiko/kubesec-playground:${VERSION}-with-kubetpl-$$KUBETPL_VERSION .'
 
 push-docker-image:
-	docker push shyiko/kubesec-playground:${VERSION}
+	KUBETPL_VERSION=0.1.0 bash -c 'docker push shyiko/kubesec-playground:${VERSION}-with-kubetpl-$$KUBETPL_VERSION'
 
 
