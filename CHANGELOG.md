@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2017-11-29
+
+### Added
+- kubesec decrypt `--template <go-template-string>` option. e.g.
+    ```sh
+    $ kubesec decrypt --cleartext \
+        --template=$'USERNAME={{ .data.USERNAME }}\nPASSWORD={{ .data.PASSWORD }}' \
+        k8s/staging.secret.enc.yml > .env
+    
+    $ cat .env
+    
+    USERNAME=username
+    PASSWORD=password    
+    ```  
+
 ## [0.3.1] - 2017-09-29
 
 ### Fixed
@@ -14,15 +29,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - MAC (AES-GMAC, covering both "data" and `--key`(s)).
-- `--cleartext` CLI option (available for `encrypt` & `decrypt` commands).
+- `--cleartext` flag (available for `encrypt` & `decrypt` commands). e.g.
     ```sh
-    $ kubesec decrypt secret.yml
+    $ kubesec decrypt k8s/staging.secret.enc.yml
     
     data:
       key: dmFsdWU= 
     ...
     
-    $ kubesec decrypt --cleartext secret.yml
+    $ kubesec decrypt --cleartext k8s/staging.secret.enc.yml
     
     data:
       key: value
@@ -49,6 +64,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0 - 2017-08-11
 
+[0.4.0]: https://github.com/shyiko/kubesec/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/shyiko/kubesec/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/shyiko/kubesec/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/shyiko/kubesec/compare/0.1.1...0.2.0
