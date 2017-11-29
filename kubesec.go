@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/go-errors/errors"
 	kubesec "github.com/shyiko/kubesec/cmd"
 	"github.com/shyiko/kubesec/gpg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
+	"html/template"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -15,7 +18,7 @@ import (
 
 var version string
 
-const template = `apiVersion: v1
+const resourceTemplate = `apiVersion: v1
 kind: Secret
 metadata:
   name: __SECRET_NAME__
@@ -129,11 +132,29 @@ func main() {
 			} else {
 				data, _, err = kubesec.Decrypt(resource)
 			}
+			if tpl, _ := cmd.Flags().GetString("template"); tpl != "" {
+				t, err := template.New("template").Option("missingkey=error").Parse(tpl)
+				if err != nil {
+					log.Fatal(err)
+				}
+				m := make(map[interface{}]interface{})
+				if err := yaml.Unmarshal(data, &m); err != nil {
+					log.Fatal(err)
+				}
+				buf := &bytes.Buffer{}
+				if err := t.Execute(buf, m); err != nil {
+					log.Fatal(err)
+				}
+				data = buf.Bytes()
+			}
 			return
 		}),
-		Example: "  kubesec decrypt secret.yml\n" +
-			"  cat secret.yml | kubesec decrypt -",
+		Example: "  kubesec decrypt secret.enc.yml\n" +
+			"  cat secret.enc.yml | kubesec decrypt -\n\n" +
+			"  kubesec decrypt secret.enc.yml --cleartext --template='KEY={{ .data.KEY }}'\n" +
+			"  kubesec decrypt secret.enc.yml --cleartext --template=$'#comment separated by a newline\\nKEY={{ .data.KEY }}'",
 	}
+	decryptCmd.Flags().String("template", "", "Go Template (http://golang.org/pkg/text/template) string for the output")
 	decryptCmd.Flags().Bool("cleartext", false, "base64-decode \"data\"")
 	editCmd := &cobra.Command{
 		Use:     "edit [file]",
@@ -239,12 +260,12 @@ func makeRunE(fn func([]byte, *cobra.Command) ([]byte, error)) runE {
 		force, _ := cmd.Flags().GetBool("force")
 		if err != nil {
 			if os.IsNotExist(err) && force {
-				input = []byte(template)
+				input = []byte(resourceTemplate)
 			} else {
 				log.Fatal(err)
 			}
 		} else if file == "-" && len(input) == 0 && force {
-			input = []byte(template)
+			input = []byte(resourceTemplate)
 		}
 		out, err := fn(input, cmd)
 		if err != nil {
@@ -256,16 +277,23 @@ func makeRunE(fn func([]byte, *cobra.Command) ([]byte, error)) runE {
 
 func write(cmd *cobra.Command, file string, out []byte) error {
 	writeToFile, _ := cmd.Flags().GetBool("in-place")
+	if writeToFile {
+		if tpl, _ := cmd.Flags().GetString("template"); tpl != "" {
+			return errors.New("--in-place & --template cannot be used at the same time")
+		}
+	}
 	if output, _ := cmd.Flags().GetString("output"); output != "" {
 		file = output
 		writeToFile = true
 	}
 	if writeToFile && file != "-" {
-		return ioutil.WriteFile(file, out, 0600)
+		if err := ioutil.WriteFile(file, out, 0600); err != nil {
+			log.Fatal(err)
+		}
 	} else {
 		fmt.Println(string(out))
-		return nil
 	}
+	return nil
 }
 
 func mustRead(file string) []byte {
