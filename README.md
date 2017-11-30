@@ -110,7 +110,7 @@ kubesec decrypt secret.enc.yml
 # decrypt to a custom Go Template (http://golang.org/pkg/text/template) string
 kubesec decrypt secret.enc.yml --cleartext --template='KEY={{ .data.KEY }}'
 kubesec decrypt secret.enc.yml --cleartext \
-  --template=$'{{ range $k, $v := .data }}{{ $k }}={{ $v }}\n{{ end }}'
+  --template=$'{{ range $k, $v := .data }}{{ $k }}={{ $v }}\n{{ end }}' > .env
 
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
 kubesec edit -i secret.enc.yml
