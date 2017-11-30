@@ -107,6 +107,9 @@ cat secret.yml | kubesec encrypt -
 # (usually combined with kubectl (`kubesec decrypt secret.enc.yml | kubectl apply -f -`))
 kubesec decrypt secret.enc.yml 
 
+# decrypt to a custom Go Template (http://golang.org/pkg/text/template) string
+kubesec decrypt secret.enc.yml --cleartext --template='KEY={{ .data.KEY }}'
+
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
 kubesec edit -i secret.enc.yml
 kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.enc.yml
