@@ -132,6 +132,9 @@ func main() {
 			} else {
 				data, _, err = kubesec.Decrypt(resource)
 			}
+			if err != nil {
+				log.Fatal(err)
+			}
 			if tpl, _ := cmd.Flags().GetString("template"); tpl != "" {
 				t, err := template.New("template").Option("missingkey=error").Parse(tpl)
 				if err != nil {
