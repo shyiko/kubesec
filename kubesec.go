@@ -22,12 +22,12 @@ import (
 var version string
 
 const resourceTemplate = `apiVersion: v1
+data:
+  _: _
 kind: Secret
 metadata:
-  name: __SECRET_NAME__
+  name: _
 type: Opaque
-data:
-  __KEY__: ""
 `
 
 func init() {
