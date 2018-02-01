@@ -63,6 +63,29 @@ func (c *Completion) Execute() (bool, error) {
 					"zsh":  complete.Command{},
 				},
 			},
+			"create": complete.Command{
+				Flags: complete.Flags{
+					"--force":        complete.PredictNothing,
+					"-f":             complete.PredictNothing,
+					"--from-file":    complete.PredictFiles("*"),
+					"--from-literal": complete.PredictAnything,
+					"--key":          complete.PredictAnything,
+					"-k":             complete.PredictAnything,
+					"--keyring":      complete.PredictAnything,
+					"--output":       complete.PredictFiles("*"),
+					"-o":             complete.PredictFiles("*"),
+				},
+				Args: limitArgsPredictor{complete.PredictFiles("*"), 2, map[string]bool{
+					// should include all !PredictNothing flags (global or not)
+					"--from-file":    true,
+					"--from-literal": true,
+					"--key":          true,
+					"-k":             true,
+					"--keyring":      true,
+					"--output":       true,
+					"-o":             true,
+				}},
+			},
 			"decrypt": complete.Command{
 				Flags: complete.Flags{
 					"--cleartext": complete.PredictNothing,
@@ -180,6 +203,7 @@ func (c *Completion) Execute() (bool, error) {
 			"-h":      complete.PredictNothing,
 		},
 	}
+	run.Sub["c"] = run.Sub["create"]
 	run.Sub["d"] = run.Sub["decrypt"]
 	run.Sub["ee"] = run.Sub["edit"]
 	run.Sub["e"] = run.Sub["encrypt"]

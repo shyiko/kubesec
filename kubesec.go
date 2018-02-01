@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/shyiko/kubesec/cli"
 	kubesec "github.com/shyiko/kubesec/cmd"
 	"github.com/shyiko/kubesec/gpg"
 	"github.com/spf13/cobra"
@@ -12,9 +14,9 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
-	"github.com/shyiko/kubesec/cli"
 )
 
 var version string
@@ -169,6 +171,84 @@ func main() {
 	}
 	decryptCmd.Flags().String("template", "", "Go Template (http://golang.org/pkg/text/template) string for the output")
 	decryptCmd.Flags().Bool("cleartext", false, "base64-decode \"data\"")
+	createCmd := &cobra.Command{
+		Use:     "create [name]",
+		Aliases: []string{"c"},
+		Short:   "Create a Secret",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return pflag.ErrHelp
+			}
+			name := args[0]
+			data := make(map[string]string)
+			literalPairs, err := cmd.Flags().GetStringSlice("from-literal")
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, literalPair := range literalPairs {
+				split := strings.SplitN(literalPair, "=", 2)
+				if len(split) != 2 {
+					return fmt.Errorf(`--from-literal: "%s" is not a key=value pair`, literalPair)
+				}
+				data[split[0]] = base64.StdEncoding.EncodeToString([]byte(split[1]))
+			}
+			filePairs, err := cmd.Flags().GetStringSlice("from-file")
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, filePair := range filePairs {
+				split := strings.SplitN(filePair, "=", 2)
+				if len(split) == 1 {
+					split = []string{filepath.Base(split[0]), split[0]}
+				}
+				buf, err := ioutil.ReadFile(split[1])
+				if err != nil {
+					log.Fatal(err)
+				}
+				data[split[0]] = base64.StdEncoding.EncodeToString(buf)
+			}
+			resource, err := yaml.Marshal(map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"metadata": map[string]string{
+					"name": name,
+				},
+				"type": "Opaque",
+				"data": data,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			keySet, err := buildKeySet()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if output, _ := cmd.Flags().GetString("output"); output != "" && output != "-" {
+				if force, _ := cmd.Flags().GetBool("force"); !force {
+					if _, err := os.Stat(output); err == nil {
+						log.Fatalf("%s exists (use --force/-f to override)", output)
+					}
+				}
+			}
+			out, err := kubesec.Encrypt(resource, *keySet)
+			if err != nil {
+				log.Fatal(err)
+			}
+			return write(cmd, "-", out)
+		},
+		Example: "  kubesec create secret-name \\\n" +
+			"    --from-literal=key=value \\\n" +
+			"    --from-file=pki/ca.crt \\\n" +
+			"    --from-file=key.pem=pki/private/server.key",
+	}
+	// --from-literal/--from-file match `kubectl create secret generic --help`
+	createCmd.Flags().BoolP("force", "f", false, "Override Secret if it already exists")
+	createCmd.Flags().StringSlice("from-literal", nil, "KEY=VALUE pair to include in secret's data")
+	createCmd.Flags().StringSlice("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
+		" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
+	createCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
+		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
+			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
 	editCmd := &cobra.Command{
 		Use:     "edit [file]",
 		Aliases: []string{"ee"},
@@ -230,6 +310,7 @@ func main() {
 	rootCmd.AddCommand(
 		encryptCmd,
 		decryptCmd,
+		createCmd,
 		editCmd,
 		completionCmd,
 		&cobra.Command{
