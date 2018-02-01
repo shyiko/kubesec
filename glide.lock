@@ -1,5 +1,5 @@
-hash: 78b6993022957165ff64d7201fca74003c5b20f211bc21f86a222177f50ded82
-updated: 2017-08-27T14:42:17.23702774-07:00
+hash: 0372bdb8d869d5e284f1d561982705987970417afceed213a6be445293841439
+updated: 2018-01-29T17:46:54.477864626-08:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -9,19 +9,61 @@ imports:
 - name: github.com/aws/aws-sdk-go
   version: 63ce630574a5ec05ecd8e8de5cea16332a5a684d
   subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/endpoints
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/protocol
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/xml/xmlutil
   - service/kms
+  - service/sts
+- name: github.com/go-ini/ini
+  version: 2e44421e256d82ebbf3d4d4fcabe8930b905eff3
 - name: github.com/golang/protobuf
   version: 4bd1920723d7b7c925de087aa32e2187708897f7
   subpackages:
   - proto
+- name: github.com/hashicorp/errwrap
+  version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
+- name: github.com/hashicorp/go-multierror
+  version: 83588e72410abfbe4df460eeb6f30841ae47d4c4
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jmespath/go-jmespath
+  version: 3433f3ea46d9f8019119e7dd41274e112a2359a9
+- name: github.com/posener/complete
+  version: cdc49b71388c2ab059f57997ef2575c9e8b4f146
+  subpackages:
+  - cmd
+  - cmd/install
+  - match
 - name: github.com/Sirupsen/logrus
-  version: a3f95b5c423586578a4e099b11a46c2479628cac
+  version: f006c2ac4710855cf0f916dd6b77acf6b048dc6e
 - name: github.com/spf13/cobra
   version: b26b538f693051ac6518e65672de3144ce3fbedc
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: golang.org/x/crypto
+  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
   version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
   subpackages:

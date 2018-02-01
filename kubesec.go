@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"github.com/shyiko/kubesec/cli"
 )
 
 var version string
@@ -45,6 +46,15 @@ func (f *simpleFormatter) Format(entry *log.Entry) ([]byte, error) {
 }
 
 func main() {
+	completion := cli.NewCompletion()
+	completed, err := completion.Execute()
+	if err != nil {
+		log.Debug(err)
+		os.Exit(3)
+	}
+	if completed {
+		os.Exit(0)
+	}
 	rootCmd := &cobra.Command{
 		Use:  "kubesec",
 		Long: "Secure secret management for Kubernetes (https://github.com/shyiko/kubesec).",
@@ -183,10 +193,45 @@ func main() {
 	editCmd.Flags().BoolP("rotate", "r", false, "Rotate Data Encryption Key")
 	editCmd.Flags().BoolP("base64", "b", false, "Keep values in Base64 (by default values are decoded before being passed to the $EDITOR (and then re-encoded on save))")
 	editCmd.Flags().BoolP("force", "f", false, "Create Secret if it doesn't exist")
+	completionCmd := &cobra.Command{
+		Use:   "completion",
+		Short: "Command-line completion",
+	}
+	completionCmd.AddCommand(
+		&cobra.Command{
+			Use:   "bash",
+			Short: "Generate Bash completion",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if len(args) != 0 {
+					return pflag.ErrHelp
+				}
+				if err := completion.GenBashCompletion(os.Stdout); err != nil {
+					log.Error(err)
+				}
+				return nil
+			},
+			Example: "  source <(kubesec completion bash)",
+		},
+		&cobra.Command{
+			Use:   "zsh",
+			Short: "Generate Z shell completion",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if len(args) != 0 {
+					return pflag.ErrHelp
+				}
+				if err := completion.GenZshCompletion(os.Stdout); err != nil {
+					log.Error(err)
+				}
+				return nil
+			},
+			Example: "  source <(kubesec completion zsh)",
+		},
+	)
 	rootCmd.AddCommand(
 		encryptCmd,
 		decryptCmd,
 		editCmd,
+		completionCmd,
 		&cobra.Command{
 			Use:     "merge [source] [target]",
 			Aliases: []string{"m"},

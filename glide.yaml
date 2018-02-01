@@ -13,3 +13,5 @@ import:
 - package: github.com/aws/aws-sdk-go
   subpackages:
   - service/kms
+- package: github.com/posener/complete
+  version: cdc49b71388c2ab059f57997ef2575c9e8b4f146
