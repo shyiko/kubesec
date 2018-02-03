@@ -37,8 +37,11 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 curl -sSL https://github.com/shyiko/kubesec/releases/download/0.4.2/kubesec-0.4.2-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64 -o kubesec && chmod a+x kubesec && sudo mv kubesec /usr/local/bin/  
-    
-# verify PGP signature (optional but RECOMMENDED)
+``` 
+
+Verify PGP signature (optional but recommended):
+
+```    
 curl -sSL https://github.com/shyiko/kubesec/releases/download/0.4.2/kubesec-0.4.2-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64.asc -o kubesec.asc
@@ -46,18 +49,23 @@ curl -sS https://keybase.io/shyiko/pgp_keys.asc | gpg --import
 gpg --verify kubesec.asc /usr/local/bin/kubesec
 ```  
 
+> macOS: `gpg` can be installed with `brew install gnupg`
+
 #### Windows
 
 Download binary from the "[release(s)](https://github.com/shyiko/kubesec/releases)" page.
 
 ## Usage
 
-> **GPG USERS ONLY**: [gpg](https://gnupg.org/) (tested: 2.0+; recommended: 2.1+) **must** be available on the PATH.   
+> **GPG USERS ONLY**:   
+[gpg](https://gnupg.org/) (tested: 2.0+; recommended: 2.1+) must be available on the PATH.   
 It's also highly recommended to set up [gpg-agent](https://wiki.archlinux.org/index.php/GnuPG#gpg-agent) to avoid 
 constant passphrase re-entry.    
 
+#### Encryption
+
 ```sh
-# encrypt a Secret
+# encrypt existing Secret (see `kubesec create` below on how to create encrypted secret from scratch)
 kubesec encrypt secret.yml
 # same as above but output is written back to secret.yml (instead of stdout)
 kubesec encrypt -i secret.yml
@@ -103,6 +111,17 @@ kubesec encrypt --key=+pgp:160A7A9CF46221A56B06AD64461A804F2609FD89 \
 # encrypt content of stdin
 cat secret.yml | kubesec encrypt -
 
+# create encrypted Secret from key=value pair(s) / file(s)
+kubesec create secret-name \
+  --data key=value \
+  --data file:pki/ca.crt \
+  --data file:hostname.key=pki/private/server.key \
+  -o secret.enc.yml
+```
+
+#### Decryption
+
+```sh
 # decrypt a Secret 
 # (usually combined with kubectl (`kubesec decrypt secret.enc.yml | kubectl apply -f -`))
 kubesec decrypt secret.enc.yml 
@@ -111,15 +130,36 @@ kubesec decrypt secret.enc.yml
 kubesec decrypt secret.enc.yml --cleartext --template='KEY={{ .data.KEY }}'
 kubesec decrypt secret.enc.yml --cleartext \
   --template=$'{{ range $k, $v := .data }}{{ $k }}={{ $v }}\n{{ end }}' > .env
+```
 
+#### Modification
+
+```sh
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
 kubesec edit -i secret.enc.yml
 kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.enc.yml
 # same as above but secret.enc.yml will be created if it doesn't exist 
 kubesec edit -if secret.enc.yml
 
+# update Secret's data (noninteractive)
+kubesec patch -i secret.enc.yml --data key1=secret_string --data file:key2=path/to/file 
+```
+
+#### Introspection
+
+```sh
 # show information about the Secret (who has access to the "data", last modification date, etc)
 kubesec introspect secret.enc.yml
+```
+
+#### <kbd>Tab</kbd> completion
+
+```sh
+# bash
+$ source <(kubesec completion bash)
+
+# zsh
+$ source <(kubesec completion zsh)
 ```
 
 > `-` can be used anywhere (where a file is expected) to reference `stdin`.  
@@ -148,11 +188,8 @@ how to generate one.
 #### #1 (basic)
 
 ```sh
-echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"myapp-stable-0"},"type":"Opaque",
-  "data":{"KEY":"dmFsdWUK","ANOTHER_KEY":"YW5vdGhlcl92YWx1ZQo="}}' | 
-  kubesec encrypt -o secret.enc.yml
-kubesec edit -i secret.enc.yml 
-kubesec decrypt secret.enc.yml | kubectl apply -f - 
+kubesec create myapp-stable-0 -d key=value -d file:client.key -o secret.enc.yml  
+kubesec decrypt secret.enc.yml | kubectl apply -f -
 ```
 
 #### #2 (client-side templating)
