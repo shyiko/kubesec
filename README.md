@@ -1,4 +1,4 @@
-# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.4.2-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
+# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.5.0-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
 
 Secure secret management for [Kubernetes](https://kubernetes.io/) (with [gpg](https://gnupg.org/), 
 [Google Cloud KMS](https://cloud.google.com/kms/) and [AWS KMS](https://aws.amazon.com/kms/) backends).
@@ -34,7 +34,7 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 #### macOS / Linux
 
 ```sh
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.4.2/kubesec-0.4.2-$(
+curl -sSL https://github.com/shyiko/kubesec/releases/download/0.5.0/kubesec-0.5.0-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64 -o kubesec && chmod a+x kubesec && sudo mv kubesec /usr/local/bin/  
 ``` 
@@ -42,7 +42,7 @@ curl -sSL https://github.com/shyiko/kubesec/releases/download/0.4.2/kubesec-0.4.
 Verify PGP signature (optional but recommended):
 
 ```    
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.4.2/kubesec-0.4.2-$(
+curl -sSL https://github.com/shyiko/kubesec/releases/download/0.5.0/kubesec-0.5.0-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64.asc -o kubesec.asc
 curl -sS https://keybase.io/shyiko/pgp_keys.asc | gpg --import
@@ -53,11 +53,13 @@ gpg --verify kubesec.asc /usr/local/bin/kubesec
 
 #### Windows
 
-Download binary from the "[release(s)](https://github.com/shyiko/kubesec/releases)" page.
+Download executable from the [Releases](https://github.com/shyiko/kubesec/releases) page.
 
 ## Usage
 
-> **GPG USERS ONLY**:   
+> **If you plan to use gpg**:  
+... but don't have a valid PGP key, see [GitHub Help - Generating a new GPG key](https://help.github.com/articles/generating-a-new-gpg-key/#platform-linux) on 
+how to generate one.  
 [gpg](https://gnupg.org/) (tested: 2.0+; recommended: 2.1+) must be available on the PATH.   
 It's also highly recommended to set up [gpg-agent](https://wiki.archlinux.org/index.php/GnuPG#gpg-agent) to avoid 
 constant passphrase re-entry.    
@@ -165,13 +167,22 @@ $ source <(kubesec completion zsh)
 > `-` can be used anywhere (where a file is expected) to reference `stdin`.  
 > (for more information see `kubesec --help`)
 
+## Example(s)
+
+#### #1 (basic)
+
+```sh
+kubesec create secret-name -d key=value -d file:path/to/file -o secret.enc.yml  
+kubesec decrypt secret.enc.yml | kubectl apply -f -
+```
+
 ## Playground
 
 If you have `docker` installed you don't need to download `kubesec` binary just to try it out.  
 Instead, launch a container and start playing: 
 
 ```sh
-docker run -it --rm shyiko/kubesec-playground:0.4.2-with-kubetpl-0.1.0 /bin/bash
+docker run -it --rm shyiko/kubesec-playground:0.5.0 /bin/bash
 $ kubesec encrypt secret.yml
 ```
 
@@ -179,190 +190,6 @@ $ kubesec encrypt secret.yml
   secret PGP key of Jean-Luc Picard (PGP fingerprint - 6206C32E111611688694CF5530BDA87E3E71C268). 
 
 > Dockerfile [is included within this repo](kubesec-playground.dockerfile).
-
-## Example(s)
- 
-If you don't have a valid PGP key, see [GitHub Help - Generating a new GPG key](https://help.github.com/articles/generating-a-new-gpg-key/#platform-linux) on 
-how to generate one. 
- 
-#### #1 (basic)
-
-```sh
-kubesec create myapp-stable-0 -d key=value -d file:client.key -o secret.enc.yml  
-kubesec decrypt secret.enc.yml | kubectl apply -f -
-```
-
-#### #2 (client-side templating)
-
-> We'll use [kubetpl](https://github.com/shyiko/kubetpl), `kind: Template` flavour. You are free to choose any other format (or tool).    
-
-Let's say we have the following (click to expand):
-
-<details>
-  <summary>&lt;project_dir&gt;/k8s/template.yml</summary>
-  
-```yml
-# snippet:k8s/template.yml
-apiVersion: v1
-kind: Template
-metadata:
-  name: template
-objects:
-- apiVersion: v1
-  kind: Pod
-  metadata:
-    name: $(NAME)-$(INSTANCE)
-    labels: 
-      app: $(NAME)
-      instance: $(INSTANCE)
-  type: Opaque
-  spec:
-    containers:
-    - name: $(NAME)
-      image: $(IMAGE)
-      imagePullPolicy: $(IMAGE_PULL_POLICY)
-      env:
-      - name: USERNAME
-        valueFrom: {secretKeyRef: {name: $(NAME)-$(INSTANCE)-$(SECRET_REF), key: USERNAME}}    
-      - name: PASSWORD
-        valueFrom: {secretKeyRef: {name: $(NAME)-$(INSTANCE)-$(SECRET_REF), key: PASSWORD}}
-      command: ["printenv"]
-      args: ["USERNAME"]
-parameters:
-- name: NAME
-  description: Application name
-  required: true
-  type: string
-- name: INSTANCE
-  description: >
-    Instance ID (used to distinguish between multiple instances (stable, canary, etc.) of the same 
-    app within the same namespace)
-  value: default
-  required: true
-  type: string
-- name: SECRET_REF
-  description: > 
-    Unique secret identifier (in can be anything, like a monotonic counter or a SHA-2 of the 
-    previous SECRET_REF) (used to distinguish between different versions of the same secret)
-  required: true
-  type: string  
-- name: IMAGE
-  description: image (e.g. debian:jessie)
-  required: true
-  type: string
-- name: IMAGE_PULL_POLICY
-  description: Image Pull Policy (e.g. IfNotPresent, Always, etc)
-  value: IfNotPresent
-  required: true
-  type: string
-```
-
-</details>
-<details>
-  <summary>&lt;project_dir&gt;/k8s/template.secret.yml</summary>
-  
-```yml
-# snippet:k8s/template.secret.yml
-apiVersion: v1
-kind: Template
-metadata:
-  name: template.secret
-objects:
-- apiVersion: v1
-  kind: Secret
-  metadata:
-    name: $(NAME)-$(INSTANCE)-$(SECRET_REF)
-  type: Opaque
-  data:
-    USERNAME: ""
-    PASSWORD: ""
-parameters:
-- name: NAME
-  description: Application name
-  required: true
-  type: string
-- name: INSTANCE
-  description: >
-    Instance ID (used to distinguish between multiple instances (stable, canary, etc.) of the same 
-    app within the same namespace)
-  value: default
-  required: true
-  type: string
-- name: SECRET_REF
-  description: > 
-    Unique secret identifier (in can be anything, like a monotonic counter or a SHA-2 of the 
-    previous SECRET_REF) (used to distinguish between different versions of the same secret)
-  required: true
-  type: string
-```
-
-</details>
-<details>
-  <summary>&lt;project_dir&gt;/k8s/staging.env.yml</summary>
-           
-```yml
-# snippet:k8s/staging.env.yml
-NAME: myapp
-SECRET_REF: 0
-```
-
-</details>
-<p><p>
-
-> BTW, all these files (+ `kubetpl`) are included in `shyiko/kubesec-playground` docker image [#playground](#playground).
-
-Let's start by creating a `Secret` and deploying an app.
-
-```sh
-# create Secret
-kubetpl render k8s/template.secret.yml -i k8s/staging.env.yml | 
-  kubesec encrypt -o k8s/staging.secret.enc.yml
-kubesec edit -i k8s/staging.secret.enc.yml
-kubesec decrypt k8s/staging.secret.enc.yml | kubectl apply -f -
-
-# deploy app
-kubetpl render k8s/template.yml -i k8s/staging.env.yml -s IMAGE=debian:jessie | kubectl apply -f -
-```
-
-At this point `k8s/staging.secret.enc.yml` should look something like:  
-
-```yml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: myapp-default-0
-type: Opaque
-data:
-  USERNAME: TUFkWD1iuKs=.O...=.D...=
-  PASSWORD: iOy1nf90+M6FrrEIoymN6cOSUYM=.E...=.q...=
-# ...  
-```    
-> (this is probably a good time to commit `k8s/staging.secret.enc.yml` to the VCS)
-
-Alright, imagine we need to change USERNAME.   
-
-> The general recommendation is to treat `ConfigMap`/`Secret`s as immutable 
-(in other words, once `ConfigMap`/`Secret` are in use - they should never (ever) change). 
-This is why we are going to generate a new secret instead of `kubesec edit ...`ing the previous one.
-Pay attention to `kubesec merge ...` part (it's used to copy the "data" from the previous version of the Secret so that we wouldn't have 
-to copy-paste).
- 
-```sh
-# update SECRET_REF
-# either open k8s/staging.env.yml in your $EDITOR of choice and make the change manually
-# or "Use the Force, Luke" (https://github.com/mikefarah/yaml)
-yaml w -i k8s/staging.env.yml \
-  SECRET_REF $(cat k8s/staging.env.yml | openssl sha256 | cut -d\  -f2 | cut -c 1-32) 
-
-# update Secret
-kubetpl render k8s/template.secret.yml -i k8s/staging.env.yml |
-  kubesec merge k8s/staging.secret.enc.yml - -o k8s/staging.secret.enc.yml 
-kubesec edit -i k8s/staging.secret.enc.yml # if needed
-kubesec decrypt k8s/staging.secret.enc.yml | kubectl apply -f -
-
-# re-deploy app
-kubetpl render k8s/template.yml -i k8s/staging.env.yml -s IMAGE=debian:jessie | kubectl apply -f -
-```
 
 ## Encryption Protocol
 

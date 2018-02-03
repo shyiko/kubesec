@@ -5,7 +5,7 @@
 #   6206C32E111611688694CF5530BDA87E3E71C268 Jean-Luc Picard <jean-luc.picard@uss-enterprise-d.starfleet>
 # - 1 imported (3rd party) public key
 #   160A7A9CF46221A56B06AD64461A804F2609FD89 Stanley Shyiko <stanley.shyiko@gmail.com>
-# + gpg2.1+, kubesec, vim (as a default $EDITOR) and kubetpl (in case you want to try 2nd example from readme)
+# + gpg2.1+, kubesec, vim (as a default $EDITOR)
 #
 # Usage:
 # docker run -it --rm shyiko/kubesec-playground:latest /bin/bash
@@ -26,15 +26,6 @@ RUN gpg2 --import jean-luc.picard.pubkey && \
 # import https://keybase.io/shyiko's public key
 RUN gpg2 --keyserver pgp.mit.edu --recv-keys 461A804F2609FD89
 # printf "trust\n5\ny\n" > gpg-trust.cmd && gpg2 --command-file gpg-trust.cmd --edit-key 461A804F2609FD89
-
-ARG KUBETPL_VERSION=unspecified
-ENV KUBETPL_VERSION=$KUBETPL_VERSION
-
-RUN curl -sSL https://github.com/shyiko/kubetpl/releases/download/$KUBETPL_VERSION/kubetpl-$KUBETPL_VERSION-linux-amd64 -o /usr/local/bin/kubetpl &&\
-    chmod a+x /usr/local/bin/kubetpl
-
-RUN curl -sSL https://github.com/mikefarah/yaml/releases/download/1.11/yaml_linux_amd64 -o /usr/local/bin/yaml &&\
-    chmod a+x /usr/local/bin/yaml
 
 ARG KUBESEC_VERSION=unspecified
 ENV KUBESEC_VERSION=$KUBESEC_VERSION
