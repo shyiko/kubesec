@@ -64,16 +64,7 @@ publish: clean build-release sign-release
 	done
 
 build-docker-image:
-	rm -rf /tmp/kubesec-playground && \
-	mkdir /tmp/kubesec-playground && \
-	docker run --rm -v $$(pwd):/workdir -v /tmp/kubesec-playground:/tmp -w /workdir node:8.2.1 \
-		bash -c $$' \
-		    npm --no-package-lock i gfm-code-blocks mkdirp 1>/dev/null 2>/tmp/npm.log && \
-			NODE_PATH=/usr/local/lib/node_modules/ node -e \'require("gfm-code-blocks")(require("fs").readFileSync("README.md", "utf8")).filter(({lang, code}) => lang === "yml" && code.includes("\\n# snippet:")).forEach(({code}) => { const f = code.match("# snippet:(\\\\S+)")[1]; require("mkdirp").sync(`/tmp/README.md/$${require("path").dirname(f)}`); fs.writeFileSync(`/tmp/README.md/$${f}`, code) })\' && \
-			chmod -R a+rw /tmp/README.md' && \
-	cp -r .ci /tmp/kubesec-playground/ && \
-	cp kubesec-playground.dockerfile /tmp/kubesec-playground/Dockerfile && \
-	bash -c 'cd /tmp/kubesec-playground && docker build --build-arg KUBESEC_VERSION=${VERSION} -t shyiko/kubesec-playground:${VERSION} .'
+	docker build -f kubesec-playground.dockerfile --build-arg KUBESEC_VERSION=${VERSION} -t shyiko/kubesec-playground:${VERSION} .
 
 push-docker-image:
 	docker push shyiko/kubesec-playground:${VERSION}

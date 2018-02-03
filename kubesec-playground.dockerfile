@@ -43,5 +43,3 @@ RUN curl -sSL https://github.com/shyiko/kubesec/releases/download/$KUBESEC_VERSI
 # sample Secret resource
 RUN echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"myapp-stable-0"},"type":"Opaque",\
     "data":{"KEY":"dmFsdWUK","ANOTHER_KEY":"YW5vdGhlcl92YWx1ZQo="}}' | kubesec encrypt - -o secret.yml
-
-COPY README.md/ /root/
