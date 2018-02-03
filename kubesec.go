@@ -282,6 +282,9 @@ func main() {
 			return kubesec.Patch(resource, kubesec.PatchOpt{Name: meta["name"], ClearTextDataMutation: data, KeySetMutation: *keySet, Rotate: rotate})
 		}),
 		Example: "  kubesec patch secret.enc.yml --data key1=secret_string --data file:key2=path/to/file\n" +
+			"  # same as above but output is written back to secret.enc.yml (instead of stdout)\n" +
+			"  kubesec patch -i secret.enc.yml --data key1=secret_string --data file:key2=path/to/file\n\n" +
+			"  # read from stdin\n" +
 			"  cat secret.enc.yml | kubesec patch - --data key1=updated_secret_string",
 	}
 	/*
