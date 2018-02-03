@@ -1,5 +1,5 @@
-hash: 498f53928017c51750ae6440f2e28113a85c27301b7af877f1e606b6c52970f4
-updated: 2018-02-03T01:23:02.482845198-08:00
+hash: 996a3cc9a7c9c6fff3b8b48f2579fd1c750d279dd06324454d3cb5b0cf32ebd7
+updated: 2018-02-03T14:04:19.055057544-08:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -50,7 +50,7 @@ imports:
   version: 3433f3ea46d9f8019119e7dd41274e112a2359a9
 - name: github.com/posener/complete
   version: 699ede78373dfb0168f00170591b698042378437
-  repo: git@github.com:shyiko/complete.git
+  repo: https://github.com/shyiko/complete.git
   subpackages:
   - cmd
   - cmd/install

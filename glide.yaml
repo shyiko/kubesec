@@ -14,5 +14,5 @@ import:
   subpackages:
   - service/kms
 - package: github.com/posener/complete
-  repo: git@github.com:shyiko/complete.git
+  repo: https://github.com/shyiko/complete.git
   version: 699ede78373dfb0168f00170591b698042378437
