@@ -306,7 +306,7 @@ func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, e
 		base64EncodedEncryptedDEK := base64.StdEncoding.EncodeToString(key.EncryptedDEK)
 		footer = append(footer, NS+nsByKeyType(key.Type)+key.Id+":"+string(base64EncodedEncryptedDEK)+"\n")
 	}
-	body, err := yaml.Marshal(rs)
+	body, err := marshal(rs)
 	if err != nil {
 		return nil, err
 	}

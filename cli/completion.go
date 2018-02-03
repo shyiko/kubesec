@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+func init() {
+	complete.LastArgBreaks = `"'@><=;|&(:`
+}
+
 type Completion struct{}
 
 func (c *Completion) GenBashCompletion(w io.Writer) error {
@@ -65,26 +69,23 @@ func (c *Completion) Execute() (bool, error) {
 			},
 			"create": complete.Command{
 				Flags: complete.Flags{
-					"--force":        complete.PredictNothing,
-					"-f":             complete.PredictNothing,
-					"--from-file":    complete.PredictFiles("*"),
-					"--from-literal": complete.PredictAnything,
-					"--key":          complete.PredictAnything,
-					"-k":             complete.PredictAnything,
-					"--keyring":      complete.PredictAnything,
-					"--output":       complete.PredictFiles("*"),
-					"-o":             complete.PredictFiles("*"),
+					"--data":  complete.PredictFiles("*"),
+					"-d":      complete.PredictFiles("*"),
+					"--force": complete.PredictNothing,
+					"-f":      complete.PredictNothing,
+					/*
+						"--from-file":    complete.PredictFiles("*"),
+						"--from-literal": complete.PredictAnything,
+					*/
+					"--key":      complete.PredictAnything,
+					"-k":         complete.PredictAnything,
+					"--keyring":  complete.PredictAnything,
+					"--metadata": complete.PredictAnything,
+					"-m":         complete.PredictAnything,
+					"--output":   complete.PredictFiles("*"),
+					"-o":         complete.PredictFiles("*"),
 				},
-				Args: limitArgsPredictor{complete.PredictFiles("*"), 2, map[string]bool{
-					// should include all !PredictNothing flags (global or not)
-					"--from-file":    true,
-					"--from-literal": true,
-					"--key":          true,
-					"-k":             true,
-					"--keyring":      true,
-					"--output":       true,
-					"-o":             true,
-				}},
+				Args: complete.PredictFiles("*"),
 			},
 			"decrypt": complete.Command{
 				Flags: complete.Flags{
@@ -96,13 +97,7 @@ func (c *Completion) Execute() (bool, error) {
 					"-o":          complete.PredictFiles("*"),
 					"--template":  complete.PredictAnything,
 				},
-				Args: limitArgsPredictor{complete.PredictFiles("*"), 2, map[string]bool{
-					// should include all !PredictNothing flags (global or not)
-					"--keyring":  true,
-					"--output":   true,
-					"-o":         true,
-					"--template": true,
-				}},
+				Args: complete.PredictFiles("*"),
 			},
 			"edit": complete.Command{
 				Flags: complete.Flags{
@@ -121,14 +116,7 @@ func (c *Completion) Execute() (bool, error) {
 					"--rotate":        complete.PredictNothing,
 					"-r":              complete.PredictNothing,
 				},
-				Args: limitArgsPredictor{complete.PredictFiles("*"), 2, map[string]bool{
-					// should include all !PredictNothing flags (global or not)
-					"--key":     true,
-					"-k":        true,
-					"--keyring": true,
-					"--output":  true,
-					"-o":        true,
-				}},
+				Args: complete.PredictFiles("*"),
 			},
 			"encrypt": complete.Command{
 				Flags: complete.Flags{
@@ -141,14 +129,7 @@ func (c *Completion) Execute() (bool, error) {
 					"--output":    complete.PredictFiles("*"),
 					"-o":          complete.PredictFiles("*"),
 				},
-				Args: limitArgsPredictor{complete.PredictFiles("*"), 2, map[string]bool{
-					// should include all !PredictNothing flags (global or not)
-					"--key":     true,
-					"-k":        true,
-					"--keyring": true,
-					"--output":  true,
-					"-o":        true,
-				}},
+				Args: complete.PredictFiles("*"),
 			},
 			"introspect": complete.Command{
 				Flags: complete.Flags{
@@ -156,12 +137,7 @@ func (c *Completion) Execute() (bool, error) {
 					"--output":  complete.PredictFiles("*"),
 					"-o":        complete.PredictFiles("*"),
 				},
-				Args: limitArgsPredictor{complete.PredictFiles("*"), 2, map[string]bool{
-					// should include all !PredictNothing flags (global or not)
-					"--keyring": true,
-					"--output":  true,
-					"-o":        true,
-				}},
+				Args: complete.PredictFiles("*"),
 			},
 			"merge": complete.Command{
 				Flags: complete.Flags{
@@ -171,12 +147,27 @@ func (c *Completion) Execute() (bool, error) {
 					"--output":   complete.PredictFiles("*"),
 					"-o":         complete.PredictFiles("*"),
 				},
-				Args: limitArgsPredictor{complete.PredictFiles("*"), 3, map[string]bool{
-					// should include all !PredictNothing flags (global or not)
-					"--keyring": true,
-					"--output":  true,
-					"-o":        true,
-				}},
+				Args: complete.PredictFiles("*"),
+			},
+			"patch": complete.Command{
+				Flags: complete.Flags{
+					"--data": complete.PredictAnything,
+					"-d":     complete.PredictAnything,
+					/*
+						"--from-file":    complete.PredictFiles("*"),
+						"--from-literal": complete.PredictAnything,
+					*/
+					"--key":      complete.PredictAnything,
+					"-k":         complete.PredictAnything,
+					"--keyring":  complete.PredictAnything,
+					"--metadata": complete.PredictAnything,
+					"-m":         complete.PredictAnything,
+					"--output":   complete.PredictFiles("*"),
+					"-o":         complete.PredictFiles("*"),
+					"--rotate":   complete.PredictAnything,
+					"-r":         complete.PredictAnything,
+				},
+				Args: complete.PredictFiles("*"),
 			},
 			"help": complete.Command{
 				Sub: complete.Commands{
@@ -186,11 +177,13 @@ func (c *Completion) Execute() (bool, error) {
 							"zsh":  complete.Command{},
 						},
 					},
+					"create":     complete.Command{},
 					"decrypt":    complete.Command{},
 					"edit":       complete.Command{},
 					"encrypt":    complete.Command{},
 					"introspect": complete.Command{},
 					"merge":      complete.Command{},
+					"patch":      complete.Command{},
 				},
 			},
 		},
@@ -203,12 +196,39 @@ func (c *Completion) Execute() (bool, error) {
 			"-h":      complete.PredictNothing,
 		},
 	}
-	run.Sub["c"] = run.Sub["create"]
-	run.Sub["d"] = run.Sub["decrypt"]
-	run.Sub["ee"] = run.Sub["edit"]
-	run.Sub["e"] = run.Sub["encrypt"]
-	run.Sub["i"] = run.Sub["introspect"]
-	run.Sub["m"] = run.Sub["merge"]
+	limitArgsPredictor := func(cmd string, limit int) {
+		c := run.Sub[cmd]
+		m := make(map[string]bool)
+		for key, predictor := range c.Flags {
+			if predictor != nil {
+				m[key] = true
+			}
+		}
+		c.Args = limitArgsPredictor{c.Args, limit + 1, m}
+		run.Sub[cmd] = c
+	}
+	for cmd, limit := range map[string]int{
+		"create":     1,
+		"decrypt":    1,
+		"edit":       1,
+		"encrypt":    1,
+		"introspect": 1,
+		"merge":      2,
+		"patch":      1,
+	} {
+		limitArgsPredictor(cmd, limit)
+	}
+	for alias, cmd := range map[string]string{
+		"c":  "create",
+		"d":  "decrypt",
+		"ee": "edit",
+		"e":  "encrypt",
+		"i":  "introspect",
+		"m":  "merge",
+		"p":  "patch",
+	} {
+		run.Sub[alias] = run.Sub[cmd]
+	}
 	completion := complete.New(filepath.Base(bin), run)
 	if os.Getenv("COMP_LINE") != "" {
 		flag.Parse()

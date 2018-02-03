@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 )
@@ -29,6 +30,8 @@ metadata:
   name: _
 type: Opaque
 `
+
+var dataKeyRegexp = regexp.MustCompile("^[0-9a-zA-Z._-]+$")
 
 func init() {
 	log.SetFormatter(&simpleFormatter{})
@@ -180,32 +183,13 @@ func main() {
 				return pflag.ErrHelp
 			}
 			name := args[0]
-			data := make(map[string]string)
-			literalPairs, err := cmd.Flags().GetStringSlice("from-literal")
+			data, err := buildData(cmd)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
-			for _, literalPair := range literalPairs {
-				split := strings.SplitN(literalPair, "=", 2)
-				if len(split) != 2 {
-					return fmt.Errorf(`--from-literal: "%s" is not a key=value pair`, literalPair)
-				}
-				data[split[0]] = base64.StdEncoding.EncodeToString([]byte(split[1]))
-			}
-			filePairs, err := cmd.Flags().GetStringSlice("from-file")
-			if err != nil {
-				log.Fatal(err)
-			}
-			for _, filePair := range filePairs {
-				split := strings.SplitN(filePair, "=", 2)
-				if len(split) == 1 {
-					split = []string{filepath.Base(split[0]), split[0]}
-				}
-				buf, err := ioutil.ReadFile(split[1])
-				if err != nil {
-					log.Fatal(err)
-				}
-				data[split[0]] = base64.StdEncoding.EncodeToString(buf)
+			base64encData := make(map[string]string, len(data))
+			for key, value := range data {
+				base64encData[key] = base64.StdEncoding.EncodeToString(value)
 			}
 			resource, err := yaml.Marshal(map[string]interface{}{
 				"apiVersion": "v1",
@@ -214,7 +198,7 @@ func main() {
 					"name": name,
 				},
 				"type": "Opaque",
-				"data": data,
+				"data": base64encData,
 			})
 			if err != nil {
 				log.Fatal(err)
@@ -237,15 +221,19 @@ func main() {
 			return write(cmd, "-", out)
 		},
 		Example: "  kubesec create secret-name \\\n" +
-			"    --from-literal=key=value \\\n" +
-			"    --from-file=pki/ca.crt \\\n" +
-			"    --from-file=key.pem=pki/private/server.key",
+			"    --data key=value \\\n" +
+			"    --data file:pki/ca.crt \\\n" +
+			"    --data file:key.pem=pki/private/server.key",
 	}
-	// --from-literal/--from-file match `kubectl create secret generic --help`
 	createCmd.Flags().BoolP("force", "f", false, "Override Secret if it already exists")
-	createCmd.Flags().StringSlice("from-literal", nil, "KEY=VALUE pair to include in secret's data")
-	createCmd.Flags().StringSlice("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
-		" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
+	/*
+		createCmd.Flags().StringSlice("from-literal", nil, "KEY=VALUE pair to include in secret's data")
+		createCmd.Flags().StringSlice("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
+			" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
+	*/
+	createCmd.Flags().StringSliceP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
+	createCmd.Flags().StringSliceP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
+		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.")
 	createCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
@@ -263,16 +251,52 @@ func main() {
 			rotate, _ := cmd.Flags().GetBool("rotate")
 			return kubesec.Edit(resource, kubesec.EditOpt{Base64: base64, Rotate: rotate, KeySetMutation: *keySet, RecomputeMAC: recomputeMAC})
 		}),
-		Example: "  kubesec edit secret.yml\n" +
-			"  cat secret.yml | kubesec edit -",
+		Example: "  kubesec edit secret.enc.yml\n" +
+			"  cat secret.enc.yml | kubesec edit -",
 	}
 	editCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
 	editCmd.Flags().Bool("recompute-mac", false, "Recompute MAC")
-	editCmd.Flags().BoolP("rotate", "r", false, "Rotate Data Encryption Key")
+	editCmd.Flags().BoolP("rotate", "r", false, "Rotate DEK (Data Encryption Key)")
 	editCmd.Flags().BoolP("base64", "b", false, "Keep values in Base64 (by default values are decoded before being passed to the $EDITOR (and then re-encoded on save))")
 	editCmd.Flags().BoolP("force", "f", false, "Create Secret if it doesn't exist")
+	patchCmd := &cobra.Command{
+		Use:     "patch [file]",
+		Aliases: []string{"p"},
+		Short:   "Update a Secret",
+		RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
+			keySet, err := buildKeySet()
+			if err != nil {
+				return nil, err
+			}
+			meta, err := buildMetadata(cmd)
+			if err != nil {
+				return nil, err
+			}
+			rotate, _ := cmd.Flags().GetBool("rotate")
+			data, err := buildData(cmd)
+			if err != nil {
+				return nil, err
+			}
+			return kubesec.Patch(resource, kubesec.PatchOpt{Name: meta["name"], ClearTextDataMutation: data, KeySetMutation: *keySet, Rotate: rotate})
+		}),
+		Example: "  kubesec patch secret.enc.yml --data key1=secret_string --data file:key2=path/to/file\n" +
+			"  cat secret.enc.yml | kubesec patch - --data key1=updated_secret_string",
+	}
+	/*
+		patchCmd.Flags().StringSlice("from-literal", nil, "KEY=VALUE pair to include in secret's data")
+		patchCmd.Flags().StringSlice("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
+			" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
+	*/
+	patchCmd.Flags().StringSliceP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
+	patchCmd.Flags().StringSliceP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
+		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.\n"+
+		"To remove a key prepend \"~\", e.g. -d ~key-to-remove.")
+	patchCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
+		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
+			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
+	patchCmd.Flags().BoolP("rotate", "r", false, "Rotate DEK (Data Encryption Key)")
 	completionCmd := &cobra.Command{
 		Use:   "completion",
 		Short: "Command-line completion",
@@ -312,6 +336,7 @@ func main() {
 		decryptCmd,
 		createCmd,
 		editCmd,
+		patchCmd,
 		completionCmd,
 		&cobra.Command{
 			Use:     "merge [source] [target]",
@@ -328,7 +353,7 @@ func main() {
 				}
 				return write(cmd, target, out)
 			},
-			Example: "  kubesec merge secret.yml -",
+			Example: "  kubesec merge source.enc.yml target.yml",
 		},
 		&cobra.Command{
 			Use:     "introspect [file]",
@@ -337,8 +362,8 @@ func main() {
 			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 				return kubesec.Introspect(resource)
 			}),
-			Example: "  kubesec introspect secret.yml\n" +
-				"  cat secret.yml | kubesec introspect -",
+			Example: "  kubesec introspect secret.enc.yml\n" +
+				"  cat secret.enc.yml | kubesec introspect -",
 		},
 	)
 	for _, cmd := range rootCmd.Commands() {
@@ -359,6 +384,82 @@ func main() {
 	rootCmd.Flags().Bool("version", false, "Print version information")
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(-1)
+	}
+}
+
+func buildMetadata(cmd *cobra.Command) (map[string]string, error) {
+	meta := make(map[string]string)
+	entries, _ := cmd.Flags().GetStringSlice("metadata")
+	for _, entry := range entries {
+		split := strings.SplitN(entry, "=", 2)
+		if len(split) != 2 {
+			return nil, fmt.Errorf(`--metadata: "%s" is not a key=value pair`, entry)
+		}
+		key, value := split[0], split[1]
+		if key != "name" {
+			return nil, errors.New(`--metadata: only "name" is allowed at this time`)
+		}
+		if value == "" {
+			log.Fatal(`"name" cannot be empty`)
+		}
+		meta[key] = value
+	}
+	return meta, nil
+}
+
+func buildData(cmd *cobra.Command) (map[string][]byte, error) {
+	data := make(map[string][]byte)
+	entries, _ := cmd.Flags().GetStringSlice("data")
+
+	// `kubectl create secret generic` compatibility
+	/*
+		compatEntries, _ := cmd.Flags().GetStringSlice("from-literal")
+		compatFileEntries, _ := cmd.Flags().GetStringSlice("from-file")
+		for _, fileEntry := range compatFileEntries {
+			compatEntries = append(compatEntries, "file:" + fileEntry)
+		}
+		entries = append(compatEntries, entries...)
+	*/
+
+	for _, entry := range entries {
+		switch {
+		case strings.HasPrefix(entry, "file:"):
+			split := strings.SplitN(strings.TrimPrefix(entry, "file:"), "=", 2)
+			if len(split) == 1 {
+				split = []string{filepath.Base(split[0]), split[0]}
+			}
+			buf, err := ioutil.ReadFile(split[1])
+			if err != nil {
+				log.Fatal(err)
+			}
+			data[split[0]] = buf
+		case strings.HasPrefix(entry, "~"):
+			data[strings.TrimPrefix(entry, "~")] = nil
+		default:
+			split := strings.SplitN(entry, "=", 2)
+			if len(split) != 2 {
+				return nil, fmt.Errorf(`--data: "%s" is not a key=value pair`, entry)
+			}
+			data[split[0]] = []byte(split[1])
+		}
+	}
+	for key := range data {
+		mustValidateDataKey(key)
+	}
+	return data, nil
+}
+
+func validateDataKey(key string) error {
+	if !dataKeyRegexp.MatchString(key) {
+		return fmt.Errorf(`"%s" cannot be used as a "data" key (expected to match /^[0-9a-zA-Z._-]+$/)`, key)
+	}
+	return nil
+}
+
+func mustValidateDataKey(key string) {
+	err := validateDataKey(key)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 

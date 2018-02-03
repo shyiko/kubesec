@@ -1,5 +1,5 @@
-hash: 0372bdb8d869d5e284f1d561982705987970417afceed213a6be445293841439
-updated: 2018-01-29T17:46:54.477864626-08:00
+hash: 498f53928017c51750ae6440f2e28113a85c27301b7af877f1e606b6c52970f4
+updated: 2018-02-03T01:23:02.482845198-08:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -49,7 +49,8 @@ imports:
 - name: github.com/jmespath/go-jmespath
   version: 3433f3ea46d9f8019119e7dd41274e112a2359a9
 - name: github.com/posener/complete
-  version: cdc49b71388c2ab059f57997ef2575c9e8b4f146
+  version: 699ede78373dfb0168f00170591b698042378437
+  repo: git@github.com:shyiko/complete.git
   subpackages:
   - cmd
   - cmd/install
