@@ -158,10 +158,10 @@ kubesec introspect secret.enc.yml
 
 ```sh
 # bash
-$ source <(kubesec completion bash)
+source <(kubesec completion bash)
 
 # zsh
-$ source <(kubesec completion zsh)
+source <(kubesec completion zsh)
 ```
 
 > `-` can be used anywhere (where a file is expected) to reference `stdin`.  
@@ -206,7 +206,7 @@ Please reach me at https://keybase.io/shyiko.
 
 ## Development
 
-> PREREQUISITE: [go1.8](https://golang.org/dl/)+.
+> PREREQUISITE: [go1.9](https://golang.org/dl/)+.
 
 ```sh
 git clone https://github.com/shyiko/kubesec $GOPATH/src/github.com/shyiko/kubesec 
@@ -219,4 +219,4 @@ go run kubesec.go
 ## Legal
 
 All code, unless specified otherwise, is licensed under the [MIT](https://opensource.org/licenses/MIT) license.  
-Copyright (c) 2017 Stanley Shyiko.
+Copyright (c) 2018 Stanley Shyiko.
