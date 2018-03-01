@@ -3,7 +3,7 @@ package cmd
 import "encoding/base64"
 
 type PatchOpt struct {
-	Name                  string
+	Metadata              map[string]string
 	ClearTextDataMutation map[string][]byte
 	KeySetMutation        KeySetMutation
 	Rotate                bool
@@ -20,13 +20,13 @@ func Patch(resource []byte, opt PatchOpt) ([]byte, error) {
 		}
 	}
 	// mutate metadata
-	if opt.Name != "" {
-		metadata, ok := rs["metadata"].(map[interface{}]interface{})
-		if !ok {
-			metadata = make(map[interface{}]interface{})
-			rs["metadata"] = metadata
-		}
-		metadata["name"] = opt.Name
+	metadata, ok := rs["metadata"].(map[interface{}]interface{})
+	if !ok {
+		metadata = make(map[interface{}]interface{})
+		rs["metadata"] = metadata
+	}
+	for key, value := range opt.Metadata {
+		metadata[key] = value
 	}
 	// mutate data
 	data := rs.data()

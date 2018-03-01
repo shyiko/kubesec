@@ -18,7 +18,10 @@ metadata:
 		t.Fatal(err)
 	}
 	assertPatchResultEq(t, encrypted, PatchOpt{}, source)
-	assertPatchResultEq(t, encrypted, PatchOpt{Name: "updated_name"}, `data:
+	assertPatchResultEq(t,
+		encrypted,
+		PatchOpt{Metadata: map[string]string{"name": "updated_name"}},
+		`data:
   another_key: value
   key: value
   key_to_remove: value
@@ -28,8 +31,20 @@ metadata:
 `)
 	assertPatchResultEq(t,
 		encrypted,
+		PatchOpt{Metadata: map[string]string{"namespace": "beyond"}},
+		`data:
+  another_key: value
+  key: value
+  key_to_remove: value
+kind: Secret
+metadata:
+  name: original_name
+  namespace: beyond
+`)
+	assertPatchResultEq(t,
+		encrypted,
 		PatchOpt{
-			Name: "updated-secret",
+			Metadata: map[string]string{"name": "updated-secret"},
 			ClearTextDataMutation: map[string][]byte{
 				"key":           []byte("updated_value"),
 				"key_added":     []byte("value"),

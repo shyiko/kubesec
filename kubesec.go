@@ -187,6 +187,15 @@ func main() {
 			if err != nil {
 				return err
 			}
+			metadata, err := buildMetadata(cmd)
+			if err != nil {
+				return err
+			}
+			if metadata["name"] == "" {
+				metadata["name"] = name
+			} else if metadata["name"] != name {
+				log.Fatalf("name %s and --metadata name %s differ", name, metadata["name"])
+			}
 			base64encData := make(map[string]string, len(data))
 			for key, value := range data {
 				base64encData[key] = base64.StdEncoding.EncodeToString(value)
@@ -194,11 +203,9 @@ func main() {
 			resource, err := yaml.Marshal(map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
-				"metadata": map[string]string{
-					"name": name,
-				},
-				"type": "Opaque",
-				"data": base64encData,
+				"metadata":   metadata,
+				"type":       "Opaque",
+				"data":       base64encData,
 			})
 			if err != nil {
 				log.Fatal(err)
@@ -279,7 +286,7 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
-			return kubesec.Patch(resource, kubesec.PatchOpt{Name: meta["name"], ClearTextDataMutation: data, KeySetMutation: *keySet, Rotate: rotate})
+			return kubesec.Patch(resource, kubesec.PatchOpt{Metadata: meta, ClearTextDataMutation: data, KeySetMutation: *keySet, Rotate: rotate})
 		}),
 		Example: "  kubesec patch secret.enc.yml --data key1=secret_string --data file:key2=path/to/file\n" +
 			"  # same as above but output is written back to secret.enc.yml (instead of stdout)\n" +
@@ -399,11 +406,11 @@ func buildMetadata(cmd *cobra.Command) (map[string]string, error) {
 			return nil, fmt.Errorf(`--metadata: "%s" is not a key=value pair`, entry)
 		}
 		key, value := split[0], split[1]
-		if key != "name" {
-			return nil, errors.New(`--metadata: only "name" is allowed at this time`)
+		if key != "name" && key != "namespace" {
+			return nil, errors.New(`--metadata: only "name" and "namespace" are allowed at this time`)
 		}
 		if value == "" {
-			log.Fatal(`"name" cannot be empty`)
+			log.Fatalf(`"%s" cannot be empty`, key)
 		}
 		meta[key] = value
 	}
