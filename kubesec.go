@@ -234,12 +234,12 @@ func main() {
 	}
 	createCmd.Flags().BoolP("force", "f", false, "Override Secret if it already exists")
 	/*
-		createCmd.Flags().StringSlice("from-literal", nil, "KEY=VALUE pair to include in secret's data")
-		createCmd.Flags().StringSlice("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
+		createCmd.Flags().StringArray("from-literal", nil, "KEY=VALUE pair to include in secret's data")
+		createCmd.Flags().StringArray("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
 			" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
 	*/
-	createCmd.Flags().StringSliceP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
-	createCmd.Flags().StringSliceP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
+	createCmd.Flags().StringArrayP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
+	createCmd.Flags().StringArrayP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
 		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.")
 	createCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
@@ -295,12 +295,12 @@ func main() {
 			"  cat secret.enc.yml | kubesec patch - --data key1=updated_secret_string",
 	}
 	/*
-		patchCmd.Flags().StringSlice("from-literal", nil, "KEY=VALUE pair to include in secret's data")
-		patchCmd.Flags().StringSlice("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
+		patchCmd.Flags().StringArray("from-literal", nil, "KEY=VALUE pair to include in secret's data")
+		patchCmd.Flags().StringArray("from-file", nil, "path/to/yoursecretfile file to be included in a secret as \"yoursecretfile\"\n"+
 			" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
 	*/
-	patchCmd.Flags().StringSliceP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
-	patchCmd.Flags().StringSliceP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
+	patchCmd.Flags().StringArrayP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
+	patchCmd.Flags().StringArrayP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
 		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.\n"+
 		"To remove a key prepend \"~\", e.g. -d ~key-to-remove.")
 	patchCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
@@ -399,7 +399,7 @@ func main() {
 
 func buildMetadata(cmd *cobra.Command) (map[string]string, error) {
 	meta := make(map[string]string)
-	entries, _ := cmd.Flags().GetStringSlice("metadata")
+	entries, _ := cmd.Flags().GetStringArray("metadata")
 	for _, entry := range entries {
 		split := strings.SplitN(entry, "=", 2)
 		if len(split) != 2 {
@@ -419,12 +419,12 @@ func buildMetadata(cmd *cobra.Command) (map[string]string, error) {
 
 func buildData(cmd *cobra.Command) (map[string][]byte, error) {
 	data := make(map[string][]byte)
-	entries, _ := cmd.Flags().GetStringSlice("data")
+	entries, _ := cmd.Flags().GetStringArray("data")
 
 	// `kubectl create secret generic` compatibility
 	/*
-		compatEntries, _ := cmd.Flags().GetStringSlice("from-literal")
-		compatFileEntries, _ := cmd.Flags().GetStringSlice("from-file")
+		compatEntries, _ := cmd.Flags().GetStringArray("from-literal")
+		compatFileEntries, _ := cmd.Flags().GetStringArray("from-file")
 		for _, fileEntry := range compatFileEntries {
 			compatEntries = append(compatEntries, "file:" + fileEntry)
 		}
