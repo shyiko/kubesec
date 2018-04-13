@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2018-04-12
+
+### Fixed
+- `unknown shorthand flag: 'i' in -i` / `unknown flag: --in-place`   
+(in case of `kubesec patch -i/--in-place`) 
+
 ## [0.6.1] - 2018-04-06
 
 ### Fixed
@@ -107,6 +113,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0 - 2017-08-11
 
+[0.6.2]: https://github.com/shyiko/kubesec/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/shyiko/kubesec/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/shyiko/kubesec/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/shyiko/kubesec/compare/0.4.2...0.5.0
