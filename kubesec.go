@@ -378,7 +378,7 @@ func main() {
 	)
 	for _, cmd := range rootCmd.Commands() {
 		switch cmd.Name() {
-		case "encrypt", "decrypt", "edit":
+		case "encrypt", "decrypt", "edit",  "patch":
 			cmd.Flags().BoolP("in-place", "i", false, "Write back to [file] (instead of stdout)")
 		case "merge":
 			cmd.Flags().BoolP("in-place", "i", false, "Write back to [target] (instead of stdout)")

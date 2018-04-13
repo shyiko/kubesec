@@ -157,6 +157,8 @@ func (c *Completion) Execute() (bool, error) {
 						"--from-file":    complete.PredictFiles("*"),
 						"--from-literal": complete.PredictAnything,
 					*/
+					"--in-place": complete.PredictNothing,
+					"-i":         complete.PredictNothing,
 					"--key":      complete.PredictAnything,
 					"-k":         complete.PredictAnything,
 					"--keyring":  complete.PredictAnything,
