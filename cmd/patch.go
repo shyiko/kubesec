@@ -4,6 +4,8 @@ import "encoding/base64"
 
 type PatchOpt struct {
 	Metadata              map[string]string
+	Annotations           map[string]string
+	Labels                map[string]string
 	ClearTextDataMutation map[string][]byte
 	KeySetMutation        KeySetMutation
 	Rotate                bool
@@ -20,13 +22,21 @@ func Patch(resource []byte, opt PatchOpt) ([]byte, error) {
 		}
 	}
 	// mutate metadata
-	metadata, ok := rs["metadata"].(map[interface{}]interface{})
-	if !ok {
-		metadata = make(map[interface{}]interface{})
-		rs["metadata"] = metadata
-	}
+	metadata := extractMap(rs, "metadata")
 	for key, value := range opt.Metadata {
 		metadata[key] = value
+	}
+	if len(opt.Annotations) > 0 {
+		annotations := extractMap(metadata, "annotations")
+		for key, value := range opt.Annotations {
+			annotations[key] = value
+		}
+	}
+	if len(opt.Labels) > 0 {
+		labels := extractMap(metadata, "labels")
+		for key, value := range opt.Labels {
+			labels[key] = value
+		}
 	}
 	// mutate data
 	data := rs.data()
@@ -52,4 +62,13 @@ func Patch(resource []byte, opt PatchOpt) ([]byte, error) {
 		return nil, err
 	}
 	return EncryptWithContext(output, *ctx)
+}
+
+func extractMap(m map[interface{}]interface{}, key string) map[interface{}]interface{} {
+	n, ok := m[key].(map[interface{}]interface{})
+	if !ok {
+		n = make(map[interface{}]interface{})
+		m[key] = n
+	}
+	return n
 }

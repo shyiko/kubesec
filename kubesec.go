@@ -183,18 +183,18 @@ func main() {
 				return pflag.ErrHelp
 			}
 			name := args[0]
-			data, err := buildData(cmd)
+			data, err := gatherData(cmd)
 			if err != nil {
 				return err
 			}
-			metadata, err := buildMetadata(cmd)
+			metadata, err := gatherMetadata(cmd)
 			if err != nil {
 				return err
 			}
-			if metadata["name"] == "" {
+			if metadata["name"] == nil {
 				metadata["name"] = name
 			} else if metadata["name"] != name {
-				log.Fatalf("name %s and --metadata name %s differ", name, metadata["name"])
+				log.Fatalf(`name "%s" and --metadata name "%s" differ`, name, metadata["name"])
 			}
 			base64encData := make(map[string]string, len(data))
 			for key, value := range data {
@@ -239,6 +239,8 @@ func main() {
 			" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
 	*/
 	createCmd.Flags().StringArrayP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
+	createCmd.Flags().StringArrayP("annotation", "a", nil, "Secret \"metadata.annotations\" to set (e.g. -a origin=http://... -a version=...)")
+	createCmd.Flags().StringArrayP("label", "l", nil, "Secret \"metadata.labels\" to set (e.g. -l foo=bar -l baz=qux)")
 	createCmd.Flags().StringArrayP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
 		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.")
 	createCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
@@ -277,16 +279,31 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
-			meta, err := buildMetadata(cmd)
+			metadata, err := gatherTopLevelMetadata(cmd)
+			if err != nil {
+				return nil, err
+			}
+			annotations, err := getFlagAsMap(cmd, "annotation")
+			if err != nil {
+				return nil, err
+			}
+			labels, err := getFlagAsMap(cmd, "label")
 			if err != nil {
 				return nil, err
 			}
 			rotate, _ := cmd.Flags().GetBool("rotate")
-			data, err := buildData(cmd)
+			data, err := gatherData(cmd)
 			if err != nil {
 				return nil, err
 			}
-			return kubesec.Patch(resource, kubesec.PatchOpt{Metadata: meta, ClearTextDataMutation: data, KeySetMutation: *keySet, Rotate: rotate})
+			return kubesec.Patch(resource, kubesec.PatchOpt{
+				Metadata:              metadata,
+				Annotations:           annotations,
+				Labels:                labels,
+				ClearTextDataMutation: data,
+				KeySetMutation:        *keySet,
+				Rotate:                rotate,
+			})
 		}),
 		Example: "  kubesec patch secret.enc.yml --data key1=secret_string --data file:key2=path/to/file\n" +
 			"  # same as above but output is written back to secret.enc.yml (instead of stdout)\n" +
@@ -300,6 +317,8 @@ func main() {
 			" (custom key (say mykey) can be specified like so: --from-file=mykey=path/to/a/file)")
 	*/
 	patchCmd.Flags().StringArrayP("metadata", "m", nil, "Secret \"metadata\" key=value to set (e.g. -m name=update-secret-name)")
+	patchCmd.Flags().StringArrayP("label", "l", nil, "Secret \"metadata.labels\" to set (e.g. -l foo=bar -l baz=qux)")
+	patchCmd.Flags().StringArrayP("annotation", "a", nil, "Secret \"metadata.annotations\" to set (e.g. -a origin=http://... -a version=...)")
 	patchCmd.Flags().StringArrayP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
 		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.\n"+
 		"To remove a key prepend \"~\", e.g. -d ~key-to-remove.")
@@ -397,27 +416,63 @@ func main() {
 	}
 }
 
-func buildMetadata(cmd *cobra.Command) (map[string]string, error) {
-	meta := make(map[string]string)
-	entries, _ := cmd.Flags().GetStringArray("metadata")
-	for _, entry := range entries {
-		split := strings.SplitN(entry, "=", 2)
-		if len(split) != 2 {
-			return nil, fmt.Errorf(`--metadata: "%s" is not a key=value pair`, entry)
-		}
-		key, value := split[0], split[1]
+func gatherMetadata(cmd *cobra.Command) (map[interface{}]interface{}, error) {
+	metadata, err := gatherTopLevelMetadata(cmd)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[interface{}]interface{})
+	for key, value := range metadata {
+		m[key] = value
+	}
+	annotations, err := getFlagAsMap(cmd, "annotation")
+	if err != nil {
+		return nil, err
+	}
+	if len(annotations) > 0 {
+		m["annotations"] = annotations
+	}
+	labels, err := getFlagAsMap(cmd, "label")
+	if err != nil {
+		return nil, err
+	}
+	if len(labels) > 0 {
+		m["labels"] = labels
+	}
+	return m, nil
+}
+
+func gatherTopLevelMetadata(cmd *cobra.Command) (map[string]string, error) {
+	m, err := getFlagAsMap(cmd, "metadata")
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range m {
 		if key != "name" && key != "namespace" {
 			return nil, errors.New(`--metadata: only "name" and "namespace" are allowed at this time`)
 		}
 		if value == "" {
-			log.Fatalf(`"%s" cannot be empty`, key)
+			return nil, fmt.Errorf(`--metadata: "%s" cannot be empty`, key)
 		}
+	}
+	return m, nil
+}
+
+func getFlagAsMap(cmd *cobra.Command, key string) (map[string]string, error) {
+	meta := make(map[string]string)
+	entries, _ := cmd.Flags().GetStringArray(key)
+	for _, entry := range entries {
+		split := strings.SplitN(entry, "=", 2)
+		if len(split) != 2 {
+			return nil, fmt.Errorf(`--%s: "%s" is not a key=value pair`, key, entry)
+		}
+		key, value := split[0], split[1]
 		meta[key] = value
 	}
 	return meta, nil
 }
 
-func buildData(cmd *cobra.Command) (map[string][]byte, error) {
+func gatherData(cmd *cobra.Command) (map[string][]byte, error) {
 	data := make(map[string][]byte)
 	entries, _ := cmd.Flags().GetStringArray("data")
 

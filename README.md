@@ -144,7 +144,11 @@ kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.enc.yml
 kubesec edit -if secret.enc.yml
 
 # update Secret's data (noninteractive)
-kubesec patch -i secret.enc.yml --data key1=secret_string --data file:key2=path/to/file 
+kubesec patch -i secret.enc.yml --data key1=secret_string --data file:key2=path/to/file
+
+kubesec decrypt secret.enc.yml -o secret.yml
+# edit secret.yml in your favourite editor
+kubesec merge secret.enc.yml secret.yml -o secret.enc.yml
 ```
 
 #### Introspection
