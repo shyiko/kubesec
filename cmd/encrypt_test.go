@@ -34,7 +34,7 @@ func TestEncryptGivenEmptyData(t *testing.T) {
 }
 
 func TestEncrypt(t *testing.T) {
-	actual, err := EncryptWithContext([]byte(`{"kind": "Secret", "data": {"key": "value"}}`), EncryptionContext{})
+	actual, err := EncryptWithContext([]byte(`{"kind": "Secret", "data": {"key": "dmFsdWU="}}`), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestKeyRotation(t *testing.T) {
 }
 
 func TestEncryptKeyAdd(t *testing.T) {
-	input := "data:\n  key: value\nkind: Secret\n"
+	input := "data:\n  key: dmFsdWU=\nkind: Secret\n"
 	encrypted, err := EncryptWithContext([]byte(input), EncryptionContext{})
 	if err != nil {
 		t.Fatal(err)
@@ -127,7 +127,7 @@ func TestEncryptKeyRemove(t *testing.T) {
 		primaryKey.Fingerprint,
 		"72ECF46A56B4AD39C907BBB71646B01B86E50310",
 	}
-	encrypted, err := EncryptWithContext([]byte("data:\n  key: value\nkind: Secret\n"), EncryptionContext{
+	encrypted, err := EncryptWithContext([]byte("data:\n  key: dmFsdWU=\nkind: Secret\n"), EncryptionContext{
 		Keys: Keys{
 			KeyWithDEK{Key{KTPGP, expected[0]}, nil},
 			KeyWithDEK{Key{KTPGP, expected[1]}, nil},

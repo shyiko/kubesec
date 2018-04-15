@@ -56,8 +56,10 @@ data:
 }
 
 func TestMerge(t *testing.T) {
-	encrypted, err := EncryptWithContext([]byte(`{"kind":"Secret","data":{"KEY":"VALUE","ANOTHER_KEY":"ANOTHER_VALUE"}}`),
-		EncryptionContext{})
+	encrypted, err := EncryptWithContext(
+		[]byte(`{"kind":"Secret","data":{"KEY":"VkFMVUU=","ANOTHER_KEY":"QU5PVEhFUl9WQUxVRQ=="}}`),
+		EncryptionContext{},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
