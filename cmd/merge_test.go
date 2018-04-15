@@ -70,8 +70,8 @@ func TestMerge(t *testing.T) {
 		[]byte(encrypted),
 		[]byte(`kind: Secret
 data:
-  YET_ANOTHER_KEY: DEFAULT_YET_ANOTHER_VALUE
-  KEY: DEFAULT_VALUE
+  YET_ANOTHER_KEY: REVGQVVMVF9ZRVRfQU5PVEhFUl9WQUxVRQ==
+  KEY: REVGQVVMVF9WQUxVRQ==
 `),
 	)
 	if err != nil {

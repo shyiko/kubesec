@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"encoding/base64"
 )
 
-func Merge(source []byte, target []byte) ([]byte, error) {
+func merge(source []byte, target []byte, cleartext bool) ([]byte, error) {
 	if !IsEncrypted(source) {
 		return nil, errors.New("[source] must be encrypted")
 	}
@@ -14,6 +15,12 @@ func Merge(source []byte, target []byte) ([]byte, error) {
 	targetRS, err := unmarshal(target)
 	if err != nil {
 		return nil, err
+	}
+	if cleartext {
+		data := targetRS.data()
+		for key, value := range data {
+			data[key] = base64.StdEncoding.EncodeToString([]byte(value))
+		}
 	}
 	var ctx *EncryptionContext
 	var decryptedSource []byte
@@ -33,14 +40,12 @@ func Merge(source []byte, target []byte) ([]byte, error) {
 	return EncryptWithContext(rs, *ctx)
 }
 
-func (rs resource) containsAllDataOf(other resource) bool {
-	otherData := other.data()
-	for key := range rs.data() {
-		if _, ok := otherData[key]; !ok {
-			return false
-		}
-	}
-	return true
+func Merge(source []byte, target []byte) ([]byte, error) {
+	return merge(source, target, false)
+}
+
+func MergeCleartext(source []byte, target []byte) ([]byte, error) {
+	return merge(source, target, true)
 }
 
 func (rs resource) mergeDataFrom(other resource) {

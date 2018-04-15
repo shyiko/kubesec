@@ -368,6 +368,32 @@ func main() {
 			Example: "  source <(kubesec completion zsh)",
 		},
 	)
+	mergeCmd := &cobra.Command{
+		Use:     "merge [source] [target]",
+		Aliases: []string{"m"},
+		Short:   `Superimpose "data" & keys from one Secret over the other`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 2 {
+				return pflag.ErrHelp
+			}
+			source, target := args[0], args[1]
+			var out []byte
+			var err error
+			if cleartext, _ := cmd.Flags().GetBool("cleartext"); cleartext {
+				out, err = kubesec.MergeCleartext(mustRead(source), mustRead(target))
+			} else {
+				out, err = kubesec.Merge(mustRead(source), mustRead(target))
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+			return write(cmd, target, out)
+		},
+		Example: "  kubesec merge source.enc.yml target.yml",
+	}
+	mergeCmd.Flags().Bool("cleartext", false, "base64-encode \"data\"")
+	mergeCmd.Deprecated = "use kubesec patch instead"
+	mergeCmd.Hidden = true
 	rootCmd.AddCommand(
 		encryptCmd,
 		decryptCmd,
@@ -375,23 +401,7 @@ func main() {
 		editCmd,
 		patchCmd,
 		completionCmd,
-		&cobra.Command{
-			Use:     "merge [source] [target]",
-			Aliases: []string{"m"},
-			Short:   `Superimpose "data" & keys from one Secret over the other`,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if len(args) != 2 {
-					return pflag.ErrHelp
-				}
-				source, target := args[0], args[1]
-				out, err := kubesec.Merge(mustRead(source), mustRead(target))
-				if err != nil {
-					log.Fatal(err)
-				}
-				return write(cmd, target, out)
-			},
-			Example: "  kubesec merge source.enc.yml target.yml",
-		},
+		mergeCmd,
 		&cobra.Command{
 			Use:     "introspect [file]",
 			Aliases: []string{"i"},
