@@ -187,7 +187,7 @@ func main() {
 		Aliases: []string{"c"},
 		Short:   "Create a Secret",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
+			if len(args) != 1 {
 				return pflag.ErrHelp
 			}
 			name := args[0]
