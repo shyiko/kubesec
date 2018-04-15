@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     ```  
 
 - `kubesec encrypt secret.yml --parent=path/to/secret.enc.yml`  
-(encrypts secret.yml using keys & DEK (preserving IVs when safe) from secret.enc.yml).  
+(encrypts secret.yml using keys & DEK (preserving IVs in case of "no change") from secret.enc.yml).  
   
     Useful in "decrypt, modify, re-encrypt-preserving-DEK" scenarios.   
 
