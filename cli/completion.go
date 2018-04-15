@@ -96,6 +96,7 @@ func (c *Completion) Execute() (bool, error) {
 			"decrypt": complete.Command{
 				Flags: complete.Flags{
 					"--cleartext": complete.PredictNothing,
+					"-x":          complete.PredictNothing,
 					"--in-place":  complete.PredictNothing,
 					"-i":          complete.PredictNothing,
 					"--keyring":   complete.PredictAnything,
@@ -127,6 +128,7 @@ func (c *Completion) Execute() (bool, error) {
 			"encrypt": complete.Command{
 				Flags: complete.Flags{
 					"--cleartext": complete.PredictNothing,
+					"-x":          complete.PredictNothing,
 					"--in-place":  complete.PredictNothing,
 					"-i":          complete.PredictNothing,
 					"--key":       complete.PredictAnything,
