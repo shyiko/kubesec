@@ -191,6 +191,9 @@ func EncryptWithContext(resource []byte, ctx EncryptionContext) ([]byte, error) 
 	cipher := aes.Cipher{}
 	data := rs.data()
 	for key, value := range data {
+		if _, err := base64.StdEncoding.DecodeString(value); err != nil {
+			return nil, fmt.Errorf(`data.%s value is not base64-encoded (either base64-encode data.* values or use --cleartext)`, key)
+		}
 		mod := len(value) % blockSize
 		if mod != 0 {
 			value += strings.Repeat("\u0000", blockSize-mod)
