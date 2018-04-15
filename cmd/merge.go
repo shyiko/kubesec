@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"errors"
 	"encoding/base64"
+	"errors"
 )
 
 func merge(source []byte, target []byte, cleartext bool) ([]byte, error) {
