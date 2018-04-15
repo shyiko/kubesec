@@ -88,6 +88,8 @@ func (c *Completion) Execute() (bool, error) {
 					"-m":         complete.PredictAnything,
 					"--output":   complete.PredictFiles("*"),
 					"-o":         complete.PredictFiles("*"),
+					"--parent":   complete.PredictFiles("*"),
+					"-p":         complete.PredictFiles("*"),
 				},
 				Args: complete.PredictFiles("*"),
 			},
@@ -143,16 +145,6 @@ func (c *Completion) Execute() (bool, error) {
 				},
 				Args: complete.PredictFiles("*"),
 			},
-			"merge": complete.Command{
-				Flags: complete.Flags{
-					"--in-place": complete.PredictNothing,
-					"-i":         complete.PredictNothing,
-					"--keyring":  complete.PredictAnything,
-					"--output":   complete.PredictFiles("*"),
-					"-o":         complete.PredictFiles("*"),
-				},
-				Args: complete.PredictFiles("*"),
-			},
 			"patch": complete.Command{
 				Flags: complete.Flags{
 					"--annotation": complete.PredictAnything,
@@ -192,7 +184,6 @@ func (c *Completion) Execute() (bool, error) {
 					"edit":       complete.Command{},
 					"encrypt":    complete.Command{},
 					"introspect": complete.Command{},
-					"merge":      complete.Command{},
 					"patch":      complete.Command{},
 				},
 			},
@@ -223,7 +214,6 @@ func (c *Completion) Execute() (bool, error) {
 		"edit":       1,
 		"encrypt":    1,
 		"introspect": 1,
-		"merge":      2,
 		"patch":      1,
 	} {
 		limitArgsPredictor(cmd, limit)
@@ -234,7 +224,6 @@ func (c *Completion) Execute() (bool, error) {
 		"ee": "edit",
 		"e":  "encrypt",
 		"i":  "introspect",
-		"m":  "merge",
 		"p":  "patch",
 	} {
 		run.Sub[alias] = run.Sub[cmd]
