@@ -139,16 +139,18 @@ kubesec decrypt secret.enc.yml --cleartext \
 ```sh
 # open decrypted Secret in $EDITOR (it will be automatically re-encrypted upon save)
 kubesec edit -i secret.enc.yml
-kubesec edit -i --key=<a_different_key_to_re-encrypt-with> secret.enc.yml
+kubesec edit -i --key=<a-different-key-to-re-encrypt-with> secret.enc.yml
 # same as above but secret.enc.yml will be created if it doesn't exist 
 kubesec edit -if secret.enc.yml
 
-# update Secret's data (noninteractive)
+# batch editing (noninteractive)
 kubesec patch -i secret.enc.yml --data key1=secret_string --data file:key2=path/to/file
 
-kubesec decrypt secret.enc.yml -o secret.yml
-# edit secret.yml in your favourite editor
-kubesec merge secret.enc.yml secret.yml -o secret.enc.yml
+# "decrypt, modify-in-any-way-you-like, re-encrypt" 
+kubesec decrypt --cleartext secret.enc.yml -o secret.yml
+# edit secret.yml using your favourite editor / tool
+kubesec encrypt --cleartext secret.yml -o secret.enc.yml --parent=secret.enc.yml
+# --parent=path/to/encrypted/secret.enc.yml above is used to preserve keys, DEK and IVs (when safe)
 ```
 
 #### Introspection
