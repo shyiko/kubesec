@@ -279,7 +279,7 @@ func unmarshal(rs []byte) (resource, error) {
 			kk, kString := k.(string)
 			vv, vString := v.(string)
 			if !kString || !vString {
-				return nil, fmt.Errorf(`Secret's "data.%v" isn't a string'`, k)
+				return nil, fmt.Errorf(`Secret's "data.%v" isn't a string`, k)
 			}
 			dataMap[kk] = vv
 		}
@@ -339,6 +339,7 @@ type KeySetMutation struct {
 	Replace bool
 	Add     []Key
 	Remove  []Key
+	Parent  []byte
 }
 
 func (ks KeySetMutation) IsEmpty() bool {
@@ -384,7 +385,16 @@ func EncryptCleartext(resource []byte, mutation KeySetMutation) ([]byte, error) 
 
 func encryptWithKeySet(resource []byte, mutation KeySetMutation, cleartext bool) ([]byte, error) {
 	var err error
-	ctx := &EncryptionContext{}
+	var ctx *EncryptionContext
+	if mutation.Parent != nil {
+		// decrypt instead of reconstructEncryptionContext so that ctx.Stash would be populated
+		_, ctx, err = decrypt(mutation.Parent, false)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		ctx = &EncryptionContext{}
+	}
 	if IsEncrypted(resource) {
 		resource, ctx, err = Decrypt(resource)
 		if err != nil {

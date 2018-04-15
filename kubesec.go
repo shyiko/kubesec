@@ -116,6 +116,13 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
+			parent, err := cmd.Flags().GetString("parent")
+			if err != nil {
+				return nil, err
+			}
+			if parent != "" {
+				keySet.Parent = mustRead(parent)
+			}
 			if cleartext, _ := cmd.Flags().GetBool("cleartext"); cleartext {
 				data, err = kubesec.EncryptCleartext(resource, *keySet)
 			} else {
@@ -137,6 +144,7 @@ func main() {
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
 	encryptCmd.Flags().Bool("cleartext", false, "base64-encode \"data\"")
+	encryptCmd.Flags().StringP("parent", "p", "", "path/to/encrypted/secret.enc.yml from which to inherit keys, DEK (!) and IVs (when safe)")
 	decryptCmd := &cobra.Command{
 		Use:     "decrypt [file]",
 		Aliases: []string{"d"},
