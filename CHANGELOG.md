@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2018-04-14
+
+### Added
+- Ability to specify `--annotation/-a`s and `--label/-l`s when `create`ing/`patch`ing secrets. e.g.
+
+    ```sh
+    $ kubesec create secret-name \
+        -a origin=https://... \
+        -a version=0.1.0+$(date -u +%Y%m%dT%H%M%SZ).$(git rev-parse --short HEAD) \
+        -l release=canary
+        -d k=v
+    
+    apiVersion: v1
+    data: 
+       k: PYsYSsk...
+    kind: Secret
+    metadata:
+      annotations:
+        origin: https://...
+        version: 0.1.0+20180415T040932Z.a9070e4
+      labels:
+        release: canary
+      name: secret-name
+    type: Opaque
+    # kubesec:v:3
+    # ...
+    ```  
+
+- `kubesec encrypt secret.yml --parent=path/to/secret.enc.yml`  
+(encrypts secret.yml using keys & DEK (preserving IVs when safe) from secret.enc.yml).  
+  
+    Useful in "decrypt, modify, re-encrypt-preserving-DEK" scenarios.   
+
+- `-x` shorthand for `--cleartext`.
+- A guard against `failed to base64-decode <key>`  
+("data" values are now checked to be base64-encoded before being encrypted). 
+
+### Deprecated
+- `kubesec merge`.
+
 ## [0.6.2] - 2018-04-12
 
 ### Fixed
@@ -113,6 +153,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0 - 2017-08-11
 
+[0.7.0]: https://github.com/shyiko/kubesec/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/shyiko/kubesec/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/shyiko/kubesec/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/shyiko/kubesec/compare/0.5.0...0.6.0
