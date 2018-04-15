@@ -143,7 +143,7 @@ func main() {
 	encryptCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
 			"\n(by default primary (E) PGP fingerprint is used; meaning only the the user who encrypted the secret will be able to decrypt it)")
-	encryptCmd.Flags().Bool("cleartext", false, "base64-encode \"data\"")
+	encryptCmd.Flags().BoolP("cleartext", "x", false, "base64-encode \"data\"")
 	encryptCmd.Flags().StringP("parent", "p", "", "path/to/encrypted/secret.enc.yml from which to inherit keys, DEK (!) and IVs (when safe)")
 	decryptCmd := &cobra.Command{
 		Use:     "decrypt [file]",
@@ -181,7 +181,7 @@ func main() {
 			"  kubesec decrypt secret.enc.yml --cleartext --template=$'#comment separated by a newline\\nKEY={{ .data.KEY }}'",
 	}
 	decryptCmd.Flags().String("template", "", "Go Template (http://golang.org/pkg/text/template) string for the output")
-	decryptCmd.Flags().Bool("cleartext", false, "base64-decode \"data\"")
+	decryptCmd.Flags().BoolP("cleartext", "x", false, "base64-decode \"data\"")
 	createCmd := &cobra.Command{
 		Use:     "create [name]",
 		Aliases: []string{"c"},
@@ -391,7 +391,7 @@ func main() {
 		},
 		Example: "  kubesec merge source.enc.yml target.yml",
 	}
-	mergeCmd.Flags().Bool("cleartext", false, "base64-encode \"data\"")
+	mergeCmd.Flags().BoolP("cleartext", "x", false, "base64-encode \"data\"")
 	mergeCmd.Deprecated = "use kubesec patch instead"
 	mergeCmd.Hidden = true
 	rootCmd.AddCommand(
