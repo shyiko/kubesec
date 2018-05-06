@@ -224,5 +224,5 @@ go run kubesec.go
 
 ## Legal
 
-All code, unless specified otherwise, is licensed under the [MIT](https://opensource.org/licenses/MIT) license.  
+All code, unless specified otherwise, is licensed under the [Apache-2.0](LICENSE) license.  
 Copyright (c) 2018 Stanley Shyiko.
