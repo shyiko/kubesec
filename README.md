@@ -1,4 +1,4 @@
-# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.7.0-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
+# kubesec ![Latest Version](https://img.shields.io/badge/latest-0.8.0-blue.svg) [![Build Status](https://travis-ci.org/shyiko/kubesec.svg?branch=master)](https://travis-ci.org/shyiko/kubesec)
 
 Secure secret management for [Kubernetes](https://kubernetes.io/) (with [gpg](https://gnupg.org/), 
 [Google Cloud KMS](https://cloud.google.com/kms/) and [AWS KMS](https://aws.amazon.com/kms/) backends).
@@ -34,7 +34,7 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 #### macOS / Linux
 
 ```sh
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.7.0/kubesec-0.7.0-$(
+curl -sSL https://github.com/shyiko/kubesec/releases/download/0.8.0/kubesec-0.8.0-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64 -o kubesec && chmod a+x kubesec && sudo mv kubesec /usr/local/bin/  
 ``` 
@@ -42,7 +42,7 @@ curl -sSL https://github.com/shyiko/kubesec/releases/download/0.7.0/kubesec-0.7.
 Verify PGP signature (optional but recommended):
 
 ```    
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.7.0/kubesec-0.7.0-$(
+curl -sSL https://github.com/shyiko/kubesec/releases/download/0.8.0/kubesec-0.8.0-$(
     bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'
   )-amd64.asc -o kubesec.asc
 curl -sS https://keybase.io/shyiko/pgp_keys.asc | gpg --import
@@ -188,7 +188,7 @@ If you have `docker` installed you don't need to download `kubesec` binary just 
 Instead, launch a container and start playing: 
 
 ```sh
-docker run -it --rm shyiko/kubesec-playground:0.7.0 /bin/bash
+docker run -it --rm shyiko/kubesec-playground:0.8.0 /bin/bash
 $ kubesec encrypt secret.yml
 ```
 
