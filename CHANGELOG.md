@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2018-05-06
+
+### Changed
+- [License to Apache-2.0](https://www.cncf.io/blog/2017/02/01/cncf-recommends-aslv2/) ([#8](https://github.com/shyiko/kubesec/issues/8)). 
+
 ## [0.7.0] - 2018-04-14
 
 ### Added
@@ -153,6 +158,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0 - 2017-08-11
 
+[0.8.0]: https://github.com/shyiko/kubesec/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/shyiko/kubesec/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/shyiko/kubesec/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/shyiko/kubesec/compare/0.6.0...0.6.1
