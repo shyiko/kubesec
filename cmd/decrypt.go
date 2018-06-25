@@ -40,24 +40,33 @@ func decrypt(resource []byte, ignoreMissingMAC bool) (resource, *EncryptionConte
 	if err != nil {
 		return nil, nil, err
 	}
-	data := rs.data()
 	ctx := &EncryptionContext{}
-	if len(data) != 0 {
+	data := rs.data()
+	stringData := rs.stringData()
+	if len(data) != 0 || len(stringData) != 0 {
 		ctx, err = reconstructEncryptionContext(resource, true, ignoreMissingMAC)
 		if err != nil {
 			return nil, nil, err
 		}
 		cipher := aes.Cipher{}
-		for key, value := range data {
-			if decryptedValue, stash, err := cipher.Decrypt(value, ctx.DEK, []byte(key)); err == nil {
-				padding := strings.Index(decryptedValue, "\u0000")
-				if padding != -1 {
-					decryptedValue = decryptedValue[:padding]
+		for _, c := range []struct {
+			path string
+			data map[string]string
+		}{
+			{"data", data},
+			{"stringData", stringData},
+		} {
+			for key, value := range c.data {
+				if decryptedValue, stash, err := cipher.Decrypt(value, ctx.DEK, []byte(key)); err == nil {
+					padding := strings.Index(decryptedValue, "\u0000")
+					if padding != -1 {
+						decryptedValue = decryptedValue[:padding]
+					}
+					c.data[key] = decryptedValue
+					ctx.Stash[fmt.Sprintf("%s.%s", c.path, key)] = stash
+				} else {
+					return nil, nil, fmt.Errorf(`Failed to decrypt Secret's "%s.%s"`, c.path, key)
 				}
-				data[key] = decryptedValue
-				ctx.Stash[key] = stash
-			} else {
-				return nil, nil, fmt.Errorf(`Failed to decrypt Secret's "data.%v"`, key)
 			}
 		}
 	}
@@ -104,7 +113,7 @@ func reconstructEncryptionContext(resource []byte, decryptDEK bool, ignoreMissin
 			}
 			return nil, errors.New("Unable to decrypt Data Encryption Key (DEK)" + hint)
 		}
-		return nil, errors.New("\"data\" isn't encrypted")
+		return nil, errors.New("Secret isn't encrypted")
 	}
 	if !ignoreMissingMAC && ctx.MAC == "" {
 		if v == version || v == versionWithAWSKMSAndGCPKMSSupport {

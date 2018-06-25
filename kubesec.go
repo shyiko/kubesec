@@ -191,10 +191,6 @@ func main() {
 				return pflag.ErrHelp
 			}
 			name := args[0]
-			data, err := gatherData(cmd)
-			if err != nil {
-				return err
-			}
 			metadata, err := gatherMetadata(cmd)
 			if err != nil {
 				return err
@@ -204,17 +200,35 @@ func main() {
 			} else if metadata["name"] != name {
 				log.Fatalf(`name "%s" and --metadata name "%s" differ`, name, metadata["name"])
 			}
-			base64encData := make(map[string]string, len(data))
-			for key, value := range data {
-				base64encData[key] = base64.StdEncoding.EncodeToString(value)
+			data, err := gatherData(cmd, "data")
+			if err != nil {
+				return err
 			}
-			resource, err := yaml.Marshal(map[string]interface{}{
+			stringData, err := gatherData(cmd, "string-data")
+			if err != nil {
+				return err
+			}
+			doc := map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
 				"metadata":   metadata,
 				"type":       "Opaque",
-				"data":       base64encData,
-			})
+			}
+			if len(data) != 0 {
+				m := make(map[string]string, len(data))
+				for key, value := range data {
+					m[key] = base64.StdEncoding.EncodeToString(value)
+				}
+				doc["data"] = m
+			}
+			if len(stringData) != 0 {
+				m := make(map[string]string, len(stringData))
+				for key, value := range stringData {
+					m[key] = string(value)
+				}
+				doc["stringData"] = m
+			}
+			resource, err := yaml.Marshal(doc)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -250,6 +264,8 @@ func main() {
 	createCmd.Flags().StringArrayP("annotation", "a", nil, "Secret \"metadata.annotations\" to set (e.g. -a origin=http://... -a version=...)")
 	createCmd.Flags().StringArrayP("label", "l", nil, "Secret \"metadata.labels\" to set (e.g. -l foo=bar -l baz=qux)")
 	createCmd.Flags().StringArrayP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
+		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.")
+	createCmd.Flags().StringArrayP("string-data", "s", nil, "Secret \"stringData\" key=value to set.\n"+
 		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.")
 	createCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
 		"PGP fingerprint(s)/Google Cloud KMS key(s)/AWS KMS key(s), owner(s) of which will be able to decrypt a Secret "+
@@ -300,7 +316,11 @@ func main() {
 				return nil, err
 			}
 			rotate, _ := cmd.Flags().GetBool("rotate")
-			data, err := gatherData(cmd)
+			data, err := gatherData(cmd, "data")
+			if err != nil {
+				return nil, err
+			}
+			stringData, err := gatherData(cmd, "string-data")
 			if err != nil {
 				return nil, err
 			}
@@ -309,6 +329,7 @@ func main() {
 				Annotations:           annotations,
 				Labels:                labels,
 				ClearTextDataMutation: data,
+				StringDataMutation:    stringData,
 				KeySetMutation:        *keySet,
 				Rotate:                rotate,
 			})
@@ -328,6 +349,9 @@ func main() {
 	patchCmd.Flags().StringArrayP("label", "l", nil, "Secret \"metadata.labels\" to set (e.g. -l foo=bar -l baz=qux)")
 	patchCmd.Flags().StringArrayP("annotation", "a", nil, "Secret \"metadata.annotations\" to set (e.g. -a origin=http://... -a version=...)")
 	patchCmd.Flags().StringArrayP("data", "d", nil, "Secret \"data\" key=value to set.\n"+
+		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.\n"+
+		"To remove a key prepend \"~\", e.g. -d ~key-to-remove.")
+	patchCmd.Flags().StringArrayP("string-data", "s", nil, "Secret \"stringData\" key=value to set.\n"+
 		"To reference a file prepend \"file:\", e.g. -d file:pki/ca.crt or -d file:key=pki/ca.crt.\n"+
 		"To remove a key prepend \"~\", e.g. -d ~key-to-remove.")
 	patchCmd.Flags().StringArrayVarP(&keys, "key", "k", []string{},
@@ -368,6 +392,7 @@ func main() {
 			Example: "  source <(kubesec completion zsh)",
 		},
 	)
+	// deprecated
 	mergeCmd := &cobra.Command{
 		Use:     "merge [source] [target]",
 		Aliases: []string{"m"},
@@ -405,7 +430,7 @@ func main() {
 		&cobra.Command{
 			Use:     "introspect [file]",
 			Aliases: []string{"i"},
-			Short:   "Show information about the Secret (who has access to the \"data\", etc)",
+			Short:   "Show information about the Secret (who has access to the data, etc)",
 			RunE: makeRunE(func(resource []byte, cmd *cobra.Command) ([]byte, error) {
 				return kubesec.Introspect(resource)
 			}),
@@ -490,9 +515,9 @@ func getFlagAsMap(cmd *cobra.Command, key string) (map[string]string, error) {
 	return meta, nil
 }
 
-func gatherData(cmd *cobra.Command) (map[string][]byte, error) {
+func gatherData(cmd *cobra.Command, flag string) (map[string][]byte, error) {
 	data := make(map[string][]byte)
-	entries, _ := cmd.Flags().GetStringArray("data")
+	entries, _ := cmd.Flags().GetStringArray(flag)
 
 	// `kubectl create secret generic` compatibility
 	/*
@@ -534,7 +559,7 @@ func gatherData(cmd *cobra.Command) (map[string][]byte, error) {
 
 func validateDataKey(key string) error {
 	if !dataKeyRegexp.MatchString(key) {
-		return fmt.Errorf(`"%s" cannot be used as a "data" key (expected to match /^[0-9a-zA-Z._-]+$/)`, key)
+		return fmt.Errorf(`"%s" cannot be used as a data key (expected to match /^[0-9a-zA-Z._-]+$/)`, key)
 	}
 	return nil
 }

@@ -22,9 +22,13 @@ const blockSize = 48
 const version = "1"
 const versionWithAWSKMSAndGCPKMSSupport = "2"
 const versionWithMAC = "3"
+const versionWithStringDataSupport = "4"
 
 func IsVersionSupported(v string) bool {
-	return v == version || v == versionWithAWSKMSAndGCPKMSSupport || v == versionWithMAC
+	return v == version ||
+		v == versionWithAWSKMSAndGCPKMSSupport ||
+		v == versionWithMAC ||
+		v == versionWithStringDataSupport
 }
 
 type Key struct {
@@ -188,23 +192,31 @@ func EncryptWithContext(resource []byte, ctx EncryptionContext) ([]byte, error) 
 		ctx.Keys = []KeyWithDEK{{Key{Id: primaryKey.Fingerprint}, nil}}
 	}
 	ctx.MAC = computeMAC(rs, ctx)
-	cipher := aes.Cipher{}
 	data := rs.data()
 	for key, value := range data {
 		if _, err := base64.StdEncoding.DecodeString(value); err != nil {
 			return nil, fmt.Errorf(`data.%s value is not base64-encoded (either base64-encode data.* values or use --cleartext)`, key)
 		}
+	}
+	encryptData("data", data, ctx)
+	encryptData("stringData", rs.stringData(), ctx)
+	return marshalWithEncryptionContext(rs, ctx)
+}
+
+func encryptData(path string, data map[string]string, ctx EncryptionContext) error {
+	cipher := aes.Cipher{}
+	for key, value := range data {
 		mod := len(value) % blockSize
 		if mod != 0 {
 			value += strings.Repeat("\u0000", blockSize-mod)
 		}
-		if encryptedValue, err := cipher.Encrypt(value, ctx.DEK, []byte(key), ctx.Stash[key]); err != nil {
-			return nil, err
+		if encryptedValue, err := cipher.Encrypt(value, ctx.DEK, []byte(key), ctx.Stash[fmt.Sprintf("%s.%s", path, key)]); err != nil {
+			return err
 		} else {
 			data[key] = encryptedValue
 		}
 	}
-	return marshalWithEncryptionContext(rs, ctx)
+	return nil
 }
 
 type resource map[interface{}]interface{}
@@ -227,7 +239,17 @@ func computeMAC(rs resource, ctx EncryptionContext) string {
 
 func gatherAdditionalAuthenticatedDataForMAC(rs resource, ctx EncryptionContext) []byte {
 	var hash bytes.Buffer
-	data := rs.data()
+	writeMap(&hash, rs.data())
+	writeMap(&hash, rs.stringData())
+	sortedKeys := ctx.Keys[:]
+	sort.Sort(sortedKeys)
+	for _, key := range sortedKeys {
+		hash.Write([]byte(key.Id))
+	}
+	return hash.Bytes()
+}
+
+func writeMap(hash *bytes.Buffer, data map[string]string) {
 	sortedDataKeys := make([]string, 0, len(data))
 	for key := range data {
 		sortedDataKeys = append(sortedDataKeys, key)
@@ -237,12 +259,6 @@ func gatherAdditionalAuthenticatedDataForMAC(rs resource, ctx EncryptionContext)
 		hash.Write([]byte(key))
 		hash.Write([]byte(data[key]))
 	}
-	sortedKeys := ctx.Keys[:]
-	sort.Sort(sortedKeys)
-	for _, key := range sortedKeys {
-		hash.Write([]byte(key.Id))
-	}
-	return hash.Bytes()
 }
 
 func validateMAC(rs resource, ctx EncryptionContext) error {
@@ -263,7 +279,25 @@ func (rs resource) data() map[string]string {
 	return data.(map[string]string)
 }
 func (rs resource) setData(data map[string]string) {
-	rs["data"] = data
+	if len(data) != 0 {
+		rs["data"] = data
+	} else {
+		delete(data, "data")
+	}
+}
+func (rs resource) stringData() map[string]string {
+	data := rs["stringData"]
+	if data == nil {
+		return nil
+	}
+	return data.(map[string]string)
+}
+func (rs resource) setStringData(data map[string]string) {
+	if len(data) != 0 {
+		rs["stringData"] = data
+	} else {
+		delete(data, "stringData")
+	}
 }
 
 func unmarshal(rs []byte) (resource, error) {
@@ -272,23 +306,33 @@ func unmarshal(rs []byte) (resource, error) {
 	if m["kind"] != "Secret" {
 		return nil, errors.New("kind != Secret")
 	}
-	if m["data"] != nil {
-		data, ok := m["data"].(map[interface{}]interface{})
+	if err := unmarshalData("data", m); err != nil {
+		return nil, err
+	}
+	if err := unmarshalData("stringData", m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func unmarshalData(path string, m map[interface{}]interface{}) error {
+	if m[path] != nil {
+		data, ok := m[path].(map[interface{}]interface{})
 		if !ok {
-			return nil, errors.New(`Secret's "data" isn't an object`)
+			return fmt.Errorf(`Secret's "%s" isn't an object`, path)
 		}
 		dataMap := make(map[string]string)
 		for k, v := range data {
 			kk, kString := k.(string)
 			vv, vString := v.(string)
 			if !kString || !vString {
-				return nil, fmt.Errorf(`Secret's "data.%v" isn't a string`, k)
+				return fmt.Errorf(`Secret's "%s.%v" isn't a string`, path, k)
 			}
 			dataMap[kk] = vv
 		}
-		m["data"] = dataMap
+		m[path] = dataMap
 	}
-	return m, nil
+	return nil
 }
 
 func marshal(rs resource) ([]byte, error) {
@@ -296,7 +340,11 @@ func marshal(rs resource) ([]byte, error) {
 }
 
 func marshalWithEncryptionContext(rs resource, ctx EncryptionContext) ([]byte, error) {
-	footer := []string{NS + NSVersion + versionWithMAC + "\n"}
+	ver := versionWithMAC
+	if len(rs.stringData()) != 0 {
+		ver = versionWithStringDataSupport
+	}
+	footer := []string{NS + NSVersion + ver + "\n"}
 	sort.Sort(ctx.Keys)
 	for _, key := range ctx.Keys {
 		if key.EncryptedDEK == nil {

@@ -7,6 +7,7 @@ type PatchOpt struct {
 	Annotations           map[string]string
 	Labels                map[string]string
 	ClearTextDataMutation map[string][]byte
+	StringDataMutation    map[string][]byte
 	KeySetMutation        KeySetMutation
 	Rotate                bool
 }
@@ -51,6 +52,19 @@ func Patch(resource []byte, opt PatchOpt) ([]byte, error) {
 		}
 	}
 	rs.setData(data)
+	// mutate stringData
+	stringData := rs.stringData()
+	if stringData == nil {
+		stringData = make(map[string]string)
+	}
+	for key, value := range opt.StringDataMutation {
+		if value == nil {
+			delete(stringData, key)
+		} else {
+			stringData[key] = string(value)
+		}
+	}
+	rs.setStringData(stringData)
 	// mutate keyset
 	opt.KeySetMutation.applyTo(ctx)
 	// force DEK rotation if requested

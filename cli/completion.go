@@ -69,12 +69,14 @@ func (c *Completion) Execute() (bool, error) {
 			},
 			"create": complete.Command{
 				Flags: complete.Flags{
-					"--annotation": complete.PredictAnything,
-					"-a":           complete.PredictAnything,
-					"--data":       complete.PredictFiles("*"),
-					"-d":           complete.PredictFiles("*"),
-					"--force":      complete.PredictNothing,
-					"-f":           complete.PredictNothing,
+					"--annotation":  complete.PredictAnything,
+					"-a":            complete.PredictAnything,
+					"--data":        complete.PredictAnything,
+					"-d":            complete.PredictAnything,
+					"--string-data": complete.PredictAnything,
+					"-s":            complete.PredictAnything,
+					"--force":       complete.PredictNothing,
+					"-f":            complete.PredictNothing,
 					/*
 						"--from-file":    complete.PredictFiles("*"),
 						"--from-literal": complete.PredictAnything,
@@ -149,10 +151,12 @@ func (c *Completion) Execute() (bool, error) {
 			},
 			"patch": complete.Command{
 				Flags: complete.Flags{
-					"--annotation": complete.PredictAnything,
-					"-a":           complete.PredictAnything,
-					"--data":       complete.PredictAnything,
-					"-d":           complete.PredictAnything,
+					"--annotation":  complete.PredictAnything,
+					"-a":            complete.PredictAnything,
+					"--data":        complete.PredictAnything,
+					"-d":            complete.PredictAnything,
+					"--string-data": complete.PredictAnything,
+					"-s":            complete.PredictAnything,
 					/*
 						"--from-file":    complete.PredictFiles("*"),
 						"--from-literal": complete.PredictAnything,
