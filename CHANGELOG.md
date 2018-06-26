@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2018-06-25
+
+### Added
+- `stringData` support (`--string-data`/`-s`) ([#11](https://github.com/shyiko/kubesec/issues/11)). e.g.
+
+    ```sh
+    $ kubesec create secret-name -s k=v
+
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: secret-name
+    stringData:
+       k: PYsYSsk...
+    type: Opaque
+    # kubesec:v:4
+    # ...
+    ```
+- Alpine Linux support (binaries are now statically-linked) ([#10](https://github.com/shyiko/kubesec/issues/10)).
+
 ## [0.8.0] - 2018-05-06
 
 ### Changed
@@ -158,6 +178,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0 - 2017-08-11
 
+[0.9.0]: https://github.com/shyiko/kubesec/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/shyiko/kubesec/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/shyiko/kubesec/compare/0.6.2...0.7.0
 [0.6.2]: https://github.com/shyiko/kubesec/compare/0.6.1...0.6.2
