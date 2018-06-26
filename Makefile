@@ -40,7 +40,7 @@ build:
 	go build -ldflags "-X main.version=${VERSION}"
 
 build-release:
-	gox -verbose \
+	env CGO_ENABLED=0 gox -verbose \
 	-ldflags "-X main.version=${VERSION}" \
 	-osarch="windows/amd64 linux/amd64 darwin/amd64" \
 	-output="release/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}" .
