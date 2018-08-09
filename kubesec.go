@@ -24,7 +24,7 @@ var version string
 
 const resourceTemplate = `apiVersion: v1
 data:
-  _: _
+  _: ""
 kind: Secret
 metadata:
   name: _
