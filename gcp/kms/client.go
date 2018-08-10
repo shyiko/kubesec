@@ -2,10 +2,10 @@ package kms
 
 import (
 	"encoding/base64"
+	"fmt"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudkms/v1"
-	"fmt"
 	"strings"
 )
 
