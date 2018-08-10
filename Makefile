@@ -62,7 +62,9 @@ publish: clean build-release sign-release
 		github-release upload --user shyiko --repo kubesec --tag ${VERSION} \
 		--name "kubesec-${VERSION}-$$qualifier.asc" --file release/kubesec-${VERSION}-$$qualifier.asc; \
 	done
-	sh .deploy-to-homebrew
+
+deploy-to-homebrew:
+	VERSION=${VERSION} sh .deploy-to-homebrew
 
 build-docker-image:
 	docker build -f kubesec-playground.dockerfile --build-arg KUBESEC_VERSION=${VERSION} -t shyiko/kubesec-playground:${VERSION} .
