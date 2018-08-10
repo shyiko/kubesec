@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2018-08-10
+
+### Fixed
+- Error message shown in case missing "Application Default Credentials" ([#14](https://github.com/shyiko/kubesec/issues/14)).
+
 ## [0.9.1] - 2018-08-09
 
 ### Fixed
@@ -183,6 +188,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.1.0 - 2017-08-11
 
+[0.9.2]: https://github.com/shyiko/kubesec/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/shyiko/kubesec/compare/0.9.0...0.9.1
 [0.9.0]: https://github.com/shyiko/kubesec/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/shyiko/kubesec/compare/0.7.0...0.8.0
