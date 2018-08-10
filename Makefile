@@ -67,7 +67,7 @@ publish: clean build-release sign-release
 build-docker-image:
 	docker build -f kubesec-playground.dockerfile --build-arg KUBESEC_VERSION=${VERSION} -t shyiko/kubesec-playground:${VERSION} .
 
-push-docker-image:
+push-docker-image: build-docker-image
 	docker push shyiko/kubesec-playground:${VERSION}
 
 
