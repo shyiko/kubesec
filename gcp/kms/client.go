@@ -5,6 +5,8 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudkms/v1"
+	"fmt"
+	"strings"
 )
 
 type CloudKMSClient struct {
@@ -15,7 +17,10 @@ func New() (*CloudKMSClient, error) {
 	ctx := context.Background()
 	client, err := google.DefaultClient(ctx, cloudkms.CloudPlatformScope)
 	if err != nil {
-		return nil, err
+		if strings.Contains(err.Error(), "could not find default credentials") {
+			return nil, fmt.Errorf("Application Default Credentials (ADC) not found.\n" +
+				"Either `gcloud auth application-default login` or set GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json (env variable)")
+		}
 	}
 	svc, err := cloudkms.New(client)
 	if err != nil {
