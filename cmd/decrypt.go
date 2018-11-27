@@ -4,12 +4,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	awskms "github.com/shyiko/kubesec/aws/kms"
 	"github.com/shyiko/kubesec/crypto/aes"
 	googlecloudkms "github.com/shyiko/kubesec/gcp/kms"
 	"github.com/shyiko/kubesec/gpg"
-	"strings"
 )
 
 func Decrypt(resource []byte) ([]byte, *EncryptionContext, error) {
@@ -81,27 +82,31 @@ func reconstructEncryptionContext(resource []byte, decryptDEK bool, ignoreMissin
 		if strings.HasPrefix(line, NS) {
 			split := strings.Split(line[len(NS):], ":")
 			if len(split) < 2 {
-				return nil, errors.New(fmt.Sprintf("Unexpected value (line %v)", i+1))
+				return nil, fmt.Errorf("Unexpected value (line %v)", i+1)
 			}
+			var err error
 			switch split[0] + ":" {
 			case NSVersion:
 				v = split[1]
 				if !IsVersionSupported(v) {
-					return nil, errors.New(fmt.Sprintf(
+					err = fmt.Errorf(
 						"It appears that Secret was encrypted with newer version of kubesec.\n" +
 							"Visit https://github.com/shyiko/kubesec for upgrade instructions.",
-					))
+					)
 				}
 			case NSPGP:
-				loadPGPKey(i+1, &ctx, decryptDEK, split[1:])
+				err = loadPGPKey(i+1, &ctx, decryptDEK, split[1:])
 			case NSGCPKMS:
-				loadGCPKMSKey(i+1, &ctx, decryptDEK, split[1:])
+				err = loadGCPKMSKey(i+1, &ctx, decryptDEK, split[1:])
 			case NSAWSKMS:
-				loadAWSKMSKey(i+1, &ctx, decryptDEK, split[1:])
+				err = loadAWSKMSKey(i+1, &ctx, decryptDEK, split[1:])
 			case NSMAC:
 				ctx.MAC = split[1]
 			default:
-				return nil, errors.New(fmt.Sprintf("Unexpected value (line %v)", i+1))
+				err = fmt.Errorf("Unexpected value (line %v)", i+1)
+			}
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
