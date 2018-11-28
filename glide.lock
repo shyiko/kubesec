@@ -55,7 +55,7 @@ imports:
   - cmd
   - cmd/install
   - match
-- name: github.com/Sirupsen/logrus
+- name: github.com/sirupsen/logrus
   version: f006c2ac4710855cf0f916dd6b77acf6b048dc6e
 - name: github.com/spf13/cobra
   version: b26b538f693051ac6518e65672de3144ce3fbedc
