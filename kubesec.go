@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/shyiko/kubesec/cli"
 	kubesec "github.com/shyiko/kubesec/cmd"
 	"github.com/shyiko/kubesec/gpg"
