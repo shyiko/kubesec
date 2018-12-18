@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	awskms "github.com/shyiko/kubesec/aws/kms"
 	"github.com/shyiko/kubesec/crypto/aes"
 	googlecloudkms "github.com/shyiko/kubesec/gcp/kms"
