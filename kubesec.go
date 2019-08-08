@@ -70,6 +70,9 @@ func main() {
 			if keyring, _ := cmd.Flags().GetString("keyring"); keyring != "" {
 				gpg.SetKeyring(keyring)
 			}
+			if passphrase, _ := cmd.Flags().GetString("passphrase"); passphrase != "" {
+				gpg.SetPassphrase(passphrase)
+			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
@@ -446,6 +449,7 @@ func main() {
 			cmd.Flags().BoolP("in-place", "i", false, "Write back to [target] (instead of stdout)")
 		}
 		cmd.Flags().String("keyring", "", "GPG keyring to use")
+		cmd.Flags().String("passphrase", "", "Passphrase to use for unattended usage with not pin entry provider")
 		cmd.Flags().StringP("output", "o", "", "Redirect output to a file")
 	}
 	walk(rootCmd, func(cmd *cobra.Command) {

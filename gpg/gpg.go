@@ -51,6 +51,7 @@ type Key struct {
 
 var pathToGPG string
 var keyring string // fixme: global state is bad but it's 2am, sorry
+var passphrase string // fixme: global state is bad but I just copied this ^^^
 
 func gpg() string {
 	if pathToGPG == "" {
@@ -64,8 +65,14 @@ func gpg() string {
 	return pathToGPG
 }
 
+// SetKeyring The keyring to source keys from
 func SetKeyring(path string) {
 	keyring = path
+}
+
+// SetPassphrase The passphrase to use for the signing key, disables pinentry
+func SetPassphrase(value string) {
+    passphrase = value
 }
 
 // http://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
@@ -253,6 +260,9 @@ func pipeThroughGPG(content []byte, args ...string) ([]byte, error) {
 	}
 	if keyring != "" {
 		args = append(args, "--no-default-keyring", "--keyring", keyring)
+	}
+	if passphrase != "" {
+		args = append(args, "--batch", "--pinentry=loopback", "--passphrase", passphrase)
 	}
 	command := append([]string{gpg()}, args...)
 	if err := executeInShell(append(command, "-o", tmp.Name()+"E", tmp.Name())...); err != nil {
