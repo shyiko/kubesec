@@ -307,6 +307,9 @@ func executeInShell(command ...string) error {
 }
 
 func executeInShellAndGrabOutput(command ...string) ([]byte, error) {
+	if keyring != "" {
+		command = append(command, "--no-default-keyring", "--keyring", keyring)
+	}
 	out, err := buildCommand(command).Output()
 	if err != nil {
 		return nil, errors.New("'" + command[1] + "' failed: " + err.Error())
