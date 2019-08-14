@@ -106,6 +106,9 @@ kubesec encrypt --key=pgp:default secret.yml
 # encrypt with PGP key ("pgp:" prefix is optional)
 kubesec encrypt --key=pgp:6206C32E111611688694CF5530BDA87E3E71C268 secret.yml
 
+# avoid gpgagent for pgp passprhase when encrypting with PGP key ("pgp:" prefix is optional)
+kubesec encrypt --passphrase=<supersecret> --key=pgp:6206C32E111611688694CF5530BDA87E3E71C268 secret.yml
+
 # encrypt with Google Cloud KMS key ("gcp:" prefix is optional)
 #
 # NOTE: you'll need either to `gcloud auth application-default login` or set
@@ -150,6 +153,12 @@ kubesec create secret-name \
 # decrypt a Secret 
 # (usually combined with kubectl (`kubesec decrypt secret.enc.yml | kubectl apply -f -`))
 kubesec decrypt secret.enc.yml 
+
+# decrypt without invoking gpgagent - useful for unattended interaction or for alternate keyrings 
+#
+# You can prevent these lines ending up in history with a space 
+# see https://www.linuxjournal.com/content/using-bash-history-more-efficiently-histcontrol or https://superuser.com/questions/352788/how-to-prevent-a-command-in-the-zshell-from-being-saved-into-history 
+kubesec decrypt --keyring alternate.keyring --passphrase=<supersecret> secret.yml
 
 # decrypt to a custom Go Template (http://golang.org/pkg/text/template) string
 kubesec decrypt secret.enc.yml --cleartext --template='KEY={{ .data.KEY }}'
