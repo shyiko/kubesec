@@ -51,6 +51,7 @@ type Key struct {
 
 var pathToGPG string
 var keyring string // fixme: global state is bad but it's 2am, sorry
+var passphrase string // fixme: global state is bad but I just copied this ^^^
 
 func gpg() string {
 	if pathToGPG == "" {
@@ -64,8 +65,26 @@ func gpg() string {
 	return pathToGPG
 }
 
+func gpgCommand(command ...string) []string {
+	args := make([]string, len(command))
+	args = append(args, gpg())
+	if keyring != "" {
+		args = append(args, "--no-default-keyring", "--keyring", keyring)
+	}
+	if passphrase != "" {
+		args = append(args, "--batch", "--pinentry=loopback", "--passphrase", passphrase)
+	}
+	return append(args, command...);
+}
+
+// SetKeyring The keyring to source keys from
 func SetKeyring(path string) {
 	keyring = path
+}
+
+// SetPassphrase The passphrase to use for the signing key, disables pinentry
+func SetPassphrase(value string) {
+    passphrase = value
 }
 
 // http://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
@@ -160,7 +179,7 @@ func parseKeys(data []byte) ([]Key, error) {
 
 func ListSecretKeys() ([]Key, error) {
 	// "--fingerprint" x2 so that fingerprints would be printed for subkeys too
-	out, err := executeInShellAndGrabOutput(gpg(), "--list-secret-keys", "--with-colons", "--fingerprint", "--fingerprint")
+	out, err := executeInShellAndGrabOutput(gpgCommand("--list-secret-keys", "--with-colons", "--fingerprint", "--fingerprint")...)
 	// output example:
 	// sec:u:4096:1:461A804F2609FD89:1495301630:::u:::scESCA:::D2760001240102010006057647860000::::
 	// fpr:::::::::160A7A9CF46221A56B06AD64461A804F2609FD89:
@@ -211,7 +230,7 @@ func keyCapabilitiesMissing(keys []Key) bool {
 
 func ListKeys() ([]Key, error) {
 	// "--fingerprint" x2 so that fingerprints would be printed for subkeys too
-	out, err := executeInShellAndGrabOutput(gpg(), "--list-keys", "--with-colons", "--fingerprint", "--fingerprint")
+	out, err := executeInShellAndGrabOutput(gpgCommand("--list-keys", "--with-colons", "--fingerprint", "--fingerprint")...)
 	if err != nil {
 		return nil, err
 	}
@@ -251,10 +270,8 @@ func pipeThroughGPG(content []byte, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if keyring != "" {
-		args = append(args, "--no-default-keyring", "--keyring", keyring)
-	}
-	command := append([]string{gpg()}, args...)
+	
+	command := gpgCommand(args...)
 	if err := executeInShell(append(command, "-o", tmp.Name()+"E", tmp.Name())...); err != nil {
 		return nil, err
 	}
