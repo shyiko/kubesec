@@ -3,11 +3,12 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"github.com/posener/complete"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/shyiko/complete"
 )
 
 func init() {
