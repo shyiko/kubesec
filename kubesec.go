@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/shyiko/kubesec/cli"
-	kubesec "github.com/shyiko/kubesec/cmd"
-	"github.com/shyiko/kubesec/gpg"
+	"github.com/willyguggenheim/kubesec/cli"
+	kubesec "github.com/willyguggenheim/kubesec/cmd"
+	"github.com/willyguggenheim/kubesec/gpg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
@@ -62,7 +62,7 @@ func main() {
 	}
 	rootCmd := &cobra.Command{
 		Use:  "kubesec",
-		Long: "Secure secret management for Kubernetes (https://github.com/shyiko/kubesec).",
+		Long: "Secure secret management for Kubernetes (https://github.com/willyguggenheim/kubesec).",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if debug, _ := cmd.Flags().GetBool("debug"); debug {
 				log.SetLevel(log.DebugLevel)

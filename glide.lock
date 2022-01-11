@@ -1,13 +1,12 @@
-hash: c4782f9da39f4a207b6cda27df14bee71c4c7c95d8bc680873f6a38fe91e32d7
-updated: 2019-08-07T16:40:18.708218336+12:00
+hash: 62b5d444b5a6d0ea3ea37baea2983f72cf9793cae86b7697f52b4495a4bba1cd
+updated: 2022-01-11T06:33:49.517839-08:00
 imports:
 - name: cloud.google.com/go
-  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
+  version: 88cacd5758491993da9a3196d7d9a3bcec4e7fc0
   subpackages:
   - compute/metadata
-  - internal
 - name: github.com/aws/aws-sdk-go
-  version: 63ce630574a5ec05ecd8e8de5cea16332a5a684d
+  version: f22cb4d0fdae9e39260e631e22b5b8b0bfee70dc
   subpackages:
   - aws
   - aws/awserr
@@ -18,36 +17,64 @@ imports:
   - aws/credentials
   - aws/credentials/ec2rolecreds
   - aws/credentials/endpointcreds
+  - aws/credentials/processcreds
+  - aws/credentials/ssocreds
   - aws/credentials/stscreds
+  - aws/csm
   - aws/defaults
   - aws/ec2metadata
   - aws/endpoints
   - aws/request
   - aws/session
   - aws/signer/v4
+  - internal/context
+  - internal/ini
+  - internal/sdkio
+  - internal/sdkmath
+  - internal/sdkrand
+  - internal/sdkuri
+  - internal/shareddefaults
+  - internal/strings
+  - internal/sync/singleflight
   - private/protocol
   - private/protocol/json/jsonutil
   - private/protocol/jsonrpc
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
+  - private/protocol/restjson
   - private/protocol/xml/xmlutil
   - service/kms
+  - service/sso
+  - service/sso/ssoiface
   - service/sts
-- name: github.com/go-ini/ini
-  version: 2e44421e256d82ebbf3d4d4fcabe8930b905eff3
+  - service/sts/stsiface
+- name: github.com/golang/groupcache
+  version: 41bb18bfe9da5321badc438f91158cd790a33aa3
+  subpackages:
+  - lru
 - name: github.com/golang/protobuf
-  version: 4bd1920723d7b7c925de087aa32e2187708897f7
+  version: 5d5e8c018a13017f9d5b8bf4fad64aaa42a87308
   subpackages:
   - proto
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
+- name: github.com/googleapis/gax-go
+  version: 615a2eb476e5c427863a4e8b5dc190f2ac4a56af
+  subpackages:
+  - v2
+  - v2/apierror
+  - v2/apierror/internal/proto
 - name: github.com/hashicorp/errwrap
-  version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
+  version: 7b00e5db719c64d14dd0caaacbd13e76254d02c0
 - name: github.com/hashicorp/go-multierror
-  version: 83588e72410abfbe4df460eeb6f30841ae47d4c4
+  version: 9974e9ec57696378079ecc3accd3d6f29401b3a0
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
-  version: 3433f3ea46d9f8019119e7dd41274e112a2359a9
+  version: 17482bad3800f5b47ee3b5b0a01e1a7dbcf55493
 - name: github.com/posener/complete
   version: 699ede78373dfb0168f00170591b698042378437
   repo: https://github.com/shyiko/complete.git
@@ -56,41 +83,81 @@ imports:
   - cmd/install
   - match
 - name: github.com/sirupsen/logrus
-  version: f006c2ac4710855cf0f916dd6b77acf6b048dc6e
+  version: 79c5ab66aa2ce7d9ff7b3c437ebc22fcc519a967
 - name: github.com/spf13/cobra
-  version: b26b538f693051ac6518e65672de3144ce3fbedc
+  version: e04ec725508c760e70263b031e5697c232d5c3fa
 - name: github.com/spf13/pflag
-  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
-- name: golang.org/x/crypto
-  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
+  version: d5e0c0615acee7028e1e2740a11102313be88de1
+- name: go.opencensus.io
+  version: bf52d9df8bb2d44cad934587ab946794456cf3c8
   subpackages:
-  - ssh/terminal
+  - internal
+  - internal/tagencoding
+  - metric/metricdata
+  - metric/metricproducer
+  - plugin/ochttp
+  - plugin/ochttp/propagation/b3
+  - resource
+  - stats
+  - stats/internal
+  - stats/view
+  - tag
+  - trace
+  - trace/internal
+  - trace/propagation
+  - trace/tracestate
 - name: golang.org/x/net
-  version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
+  version: d55c255bac037b8052cb2cb906e2a42ef152ff79
   subpackages:
   - context
   - context/ctxhttp
+  - http/httpguts
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - trace
 - name: golang.org/x/oauth2
-  version: a6bd8cefa1811bd24b86f8902872e4e8225f74c4
+  version: d3ed0bb246c8d3c75b63937d9a5eecff9c74d7fe
   subpackages:
+  - authhandler
   - google
+  - google/internal/externalaccount
   - internal
   - jws
   - jwt
 - name: golang.org/x/sys
-  version: afce3de5756ca82699128ebae46ac95ad59d6297
+  version: 5a964db013201115fcba5c3d31ade965d0969335
   subpackages:
+  - internal/unsafeheader
   - unix
+  - windows
+- name: golang.org/x/text
+  version: 18b340fc7af22495828ffbe71e9f9e22583bc7a9
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
 - name: google.golang.org/api
-  version: e3824ed33c72bf7e81da0286772c34b987520914
+  version: a72c2cad27dab80709ff1aca7d562786b21bc13a
   subpackages:
   - cloudkms
   - cloudkms/v1
-  - gensupport
   - googleapi
-  - googleapi/internal/uritemplates
+  - googleapi/transport
+  - internal
+  - internal/gensupport
+  - internal/impersonate
+  - internal/third_party/uritemplates
+  - option
+  - option/internaloption
+  - transport/cert
+  - transport/http
+  - transport/http/internal/propagation
+  - transport/internal/dca
 - name: google.golang.org/appengine
-  version: 12d5545dc1cfa6047a286d5e853841b6471f4c19
+  version: da036ec7cbbfdb52b74f804298fe0c25531707d6
   subpackages:
   - internal
   - internal/app_identity
@@ -101,6 +168,94 @@ imports:
   - internal/remote_api
   - internal/urlfetch
   - urlfetch
+- name: google.golang.org/genproto
+  version: 42d7afdf6368b172d1756705e51339afa412e4f9
+  subpackages:
+  - googleapis/rpc/code
+  - googleapis/rpc/errdetails
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: 77b478d768e7e75234406b53471844a0a8d6faf4
+  subpackages:
+  - attributes
+  - backoff
+  - balancer
+  - balancer/base
+  - balancer/grpclb/state
+  - balancer/roundrobin
+  - binarylog/grpc_binarylog_v1
+  - codes
+  - connectivity
+  - credentials
+  - credentials/insecure
+  - encoding
+  - encoding/proto
+  - grpclog
+  - internal
+  - internal/backoff
+  - internal/balancerload
+  - internal/binarylog
+  - internal/buffer
+  - internal/channelz
+  - internal/credentials
+  - internal/envconfig
+  - internal/grpclog
+  - internal/grpcrand
+  - internal/grpcsync
+  - internal/grpcutil
+  - internal/metadata
+  - internal/resolver
+  - internal/resolver/dns
+  - internal/resolver/passthrough
+  - internal/resolver/unix
+  - internal/serviceconfig
+  - internal/status
+  - internal/syscall
+  - internal/transport
+  - internal/transport/networktype
+  - keepalive
+  - metadata
+  - peer
+  - resolver
+  - serviceconfig
+  - stats
+  - status
+  - tap
+- name: google.golang.org/protobuf
+  version: e5db2960ed1380681b571cdf4648230beefaf58b
+  subpackages:
+  - encoding/protojson
+  - encoding/prototext
+  - encoding/protowire
+  - internal/descfmt
+  - internal/descopts
+  - internal/detrand
+  - internal/encoding/defval
+  - internal/encoding/json
+  - internal/encoding/messageset
+  - internal/encoding/tag
+  - internal/encoding/text
+  - internal/errors
+  - internal/filedesc
+  - internal/filetype
+  - internal/flags
+  - internal/genid
+  - internal/impl
+  - internal/order
+  - internal/pragma
+  - internal/set
+  - internal/strs
+  - internal/version
+  - proto
+  - reflect/protodesc
+  - reflect/protoreflect
+  - reflect/protoregistry
+  - runtime/protoiface
+  - runtime/protoimpl
+  - types/descriptorpb
+  - types/known/anypb
+  - types/known/durationpb
+  - types/known/timestamppb
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: 7649d4548cb53a614db133b2a8ac1f31859dda8c
 testImports: []

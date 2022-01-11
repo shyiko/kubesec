@@ -30,11 +30,11 @@ RUN gpg2 --keyserver pgp.mit.edu --recv-keys 461A804F2609FD89
 ARG KUBESEC_VERSION=unspecified
 ENV KUBESEC_VERSION=$KUBESEC_VERSION
 
-RUN curl -sSL https://github.com/shyiko/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
+RUN curl -sSL https://github.com/willyguggenheim/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
       bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'\
     )-amd64 > kubesec &&\
   chmod a+x kubesec &&\
-  curl -sSL https://github.com/shyiko/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
+  curl -sSL https://github.com/willyguggenheim/kubesec/releases/download/$KUBESEC_VERSION/kubesec-$KUBESEC_VERSION-$(\
       bash -c '[[ $OSTYPE == darwin* ]] && echo darwin || echo linux'\
     )-amd64.asc > kubesec.asc &&\
   gpg2 --verify kubesec.asc &&\
