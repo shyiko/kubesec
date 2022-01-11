@@ -6,10 +6,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	awskms "github.com/shyiko/kubesec/aws/kms"
-	"github.com/shyiko/kubesec/crypto/aes"
-	googlecloudkms "github.com/shyiko/kubesec/gcp/kms"
-	"github.com/shyiko/kubesec/gpg"
+	awskms "github.com/willyguggenheim/kubesec/aws/kms"
+	"github.com/willyguggenheim/kubesec/crypto/aes"
+	googlecloudkms "github.com/willyguggenheim/kubesec/gcp/kms"
+	"github.com/willyguggenheim/kubesec/gpg"
 	"gopkg.in/yaml.v2"
 	"regexp"
 	"sort"
@@ -174,7 +174,7 @@ func EncryptWithContext(resource []byte, ctx EncryptionContext) ([]byte, error) 
 	if ctx.DEK == nil {
 		for _, key := range ctx.Keys {
 			if key.EncryptedDEK != nil {
-				panic("Unexpected state (please report at https://github.com/shyiko/kubesec)")
+				panic("Unexpected state (please report at https://github.com/willyguggenheim/kubesec)")
 			}
 		}
 		key := make([]byte, 32)

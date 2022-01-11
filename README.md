@@ -34,14 +34,14 @@ so much more user-friendly (+ you can ascertain that specific entry is present e
 #### macOS
 
 ```sh
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.9.2/kubesec-0.9.2-darwin-amd64 \
+curl -sSL https://github.com/willyguggenheim/kubesec/releases/download/0.9.2/kubesec-0.9.2-darwin-amd64 \
   -o kubesec && chmod a+x kubesec && sudo mv kubesec /usr/local/bin/  
 ``` 
 
 Verify PGP signature (optional but recommended):
 
 ```    
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.9.2/kubesec-0.9.2-darwin-amd64.asc \
+curl -sSL https://github.com/willyguggenheim/kubesec/releases/download/0.9.2/kubesec-0.9.2-darwin-amd64.asc \
   -o kubesec.asc
 curl -sS https://keybase.io/shyiko/pgp_keys.asc | gpg --import
 gpg --verify kubesec.asc /usr/local/bin/kubesec
@@ -61,14 +61,14 @@ brew install shyiko/kubesec/kubesec --with-short-name # install as "ksec"
 #### Linux
 
 ```sh
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.9.2/kubesec-0.9.2-linux-amd64 \
+curl -sSL https://github.com/willyguggenheim/kubesec/releases/download/0.9.2/kubesec-0.9.2-linux-amd64 \
   -o kubesec && chmod a+x kubesec && sudo mv kubesec /usr/local/bin/  
 ``` 
 
 Verify PGP signature (optional but recommended):
 
 ```    
-curl -sSL https://github.com/shyiko/kubesec/releases/download/0.9.2/kubesec-0.9.2-linux-amd64.asc \
+curl -sSL https://github.com/willyguggenheim/kubesec/releases/download/0.9.2/kubesec-0.9.2-linux-amd64.asc \
   -o kubesec.asc
 curl -sS https://keybase.io/shyiko/pgp_keys.asc | gpg --import
 gpg --verify kubesec.asc /usr/local/bin/kubesec
@@ -76,7 +76,7 @@ gpg --verify kubesec.asc /usr/local/bin/kubesec
 
 #### Windows
 
-Download executable from the [Releases](https://github.com/shyiko/kubesec/releases) page.
+Download executable from the [Releases](https://github.com/willyguggenheim/kubesec/releases) page.
 
 ## Usage
 
@@ -247,8 +247,8 @@ Please reach me at https://keybase.io/shyiko.
 > PREREQUISITE: [go1.9](https://golang.org/dl/)+.
 
 ```sh
-git clone https://github.com/shyiko/kubesec $GOPATH/src/github.com/shyiko/kubesec 
-cd $GOPATH/src/github.com/shyiko/kubesec
+git clone https://github.com/willyguggenheim/kubesec $GOPATH/src/github.com/willyguggenheim/kubesec 
+cd $GOPATH/src/github.com/willyguggenheim/kubesec
 make fetch
 
 go run kubesec.go

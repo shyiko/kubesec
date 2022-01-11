@@ -5,4 +5,4 @@ language: go
 go:
   - 1.8
 install: make fetch
-script: docker run --rm -v $(pwd):/go/src/github.com/shyiko/kubesec:ro -w /go/src/github.com/shyiko/kubesec shyiko/kubesec-ci:latest /bin/bash -c "make test"
+script: docker run --rm -v $(pwd):/go/src/github.com/willyguggenheim/kubesec:ro -w /go/src/github.com/willyguggenheim/kubesec shyiko/kubesec-ci:latest /bin/bash -c "make test"

@@ -4,7 +4,7 @@ if [ "$GITHUB_TOKEN" == "" ]; then echo "\$GITHUB_TOKEN isn't set"; exit 1; fi
 if [ "$VERSION" == "" ]; then echo "\$VERSION isn't set"; exit 1; fi
 
 ARCHIVE=$(mktemp /tmp/kubesec.XXXXXX)
-curl -sSL https://github.com/shyiko/kubesec/archive/$VERSION.tar.gz -o $ARCHIVE
+curl -sSL https://github.com/willyguggenheim/kubesec/archive/$VERSION.tar.gz -o $ARCHIVE
 if ! tar xOf $ARCHIVE &> /dev/null; then echo "$ARCHIVE isn't a valid archive"; exit 1; fi
 
 HASH=$(shasum -a 256 $ARCHIVE | cut -d\  -f1)
@@ -15,10 +15,10 @@ git clone https://${GITHUB_TOKEN}@github.com/shyiko/homebrew-kubesec.git $CHECKO
 {
 echo "class Kubesec < Formula"
 echo "  desc \"Secure Secret management for Kubernetes (with gpg, Google Cloud KMS and AWS KMS backends)\""
-echo "  homepage \"https://github.com/shyiko/kubesec\""
-echo "  url \"https://github.com/shyiko/kubesec/archive/$VERSION.tar.gz\""
+echo "  homepage \"https://github.com/willyguggenheim/kubesec\""
+echo "  url \"https://github.com/willyguggenheim/kubesec/archive/$VERSION.tar.gz\""
 echo "  sha256 \"$HASH\""
-echo "  head \"https://github.com/shyiko/kubesec.git\""
+echo "  head \"https://github.com/willyguggenheim/kubesec.git\""
 echo "  version \"$VERSION\""
 echo "  depends_on \"go\" => :build"
 echo ""
@@ -27,8 +27,8 @@ echo ""
 echo "  def install"
 echo "    ENV[\"GOPATH\"] = buildpath"
 echo "    ENV[\"PATH\"]  = \"#{ENV[\"PATH\"]}:#{ENV[\"GOPATH\"]}/bin\""
-echo "    (buildpath/\"src/github.com/shyiko/kubesec\").install buildpath.children"
-echo "    cd \"src/github.com/shyiko/kubesec\" do"
+echo "    (buildpath/\"src/github.com/willyguggenheim/kubesec\").install buildpath.children"
+echo "    cd \"src/github.com/willyguggenheim/kubesec\" do"
 echo "      system \"make\", \"fetch\""
 echo "      system \"make\", \"build\""
 echo "      bin.install \"kubesec\" => build.with?(\"short-name\") ? \"ksec\" : \"kubesec\""

@@ -7,17 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.9.2] - 2018-08-10
 
 ### Fixed
-- Error message shown in case missing "Application Default Credentials" ([#14](https://github.com/shyiko/kubesec/issues/14)).
+- Error message shown in case missing "Application Default Credentials" ([#14](https://github.com/willyguggenheim/kubesec/issues/14)).
 
 ## [0.9.1] - 2018-08-09
 
 ### Fixed
-- `Failed to base64-decode _` on `kubesec edit -if` ([#15](https://github.com/shyiko/kubesec/issues/15)).
+- `Failed to base64-decode _` on `kubesec edit -if` ([#15](https://github.com/willyguggenheim/kubesec/issues/15)).
 
 ## [0.9.0] - 2018-06-25
 
 ### Added
-- `stringData` support (`--string-data`/`-s`) ([#11](https://github.com/shyiko/kubesec/issues/11)). e.g.
+- `stringData` support (`--string-data`/`-s`) ([#11](https://github.com/willyguggenheim/kubesec/issues/11)). e.g.
 
     ```sh
     $ kubesec create secret-name -s k=v
@@ -32,12 +32,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     # kubesec:v:4
     # ...
     ```
-- Alpine Linux support (binaries are now statically-linked) ([#10](https://github.com/shyiko/kubesec/issues/10)).
+- Alpine Linux support (binaries are now statically-linked) ([#10](https://github.com/willyguggenheim/kubesec/issues/10)).
 
 ## [0.8.0] - 2018-05-06
 
 ### Changed
-- [License to Apache-2.0](https://www.cncf.io/blog/2017/02/01/cncf-recommends-aslv2/) ([#8](https://github.com/shyiko/kubesec/issues/8)). 
+- [License to Apache-2.0](https://www.cncf.io/blog/2017/02/01/cncf-recommends-aslv2/) ([#8](https://github.com/willyguggenheim/kubesec/issues/8)). 
 
 ## [0.7.0] - 2018-04-14
 
@@ -94,7 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.6.0] - 2018-03-01
 
 ### Added
-- `--metadata namespace=...` support ([#5](https://github.com/shyiko/kubesec/pull/5)).
+- `--metadata namespace=...` support ([#5](https://github.com/willyguggenheim/kubesec/pull/5)).
 
 ## [0.5.0] - 2018-02-03
 
@@ -114,7 +114,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     $ kubesec patch secret.enc.yml --data key=value --data file:ta.key
     ```     
 (`kubesec patch --help` for more). 
-- [<kbd>Tab</kbd> completion](https://github.com/shyiko/kubesec#tab-completion) (for bash and zsh).
+- [<kbd>Tab</kbd> completion](https://github.com/willyguggenheim/kubesec#tab-completion) (for bash and zsh).
 
 ## [0.4.2] - 2017-12-27
 
@@ -184,23 +184,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.1] - 2017-08-15
 
 ### Fixed
-- `gpg` lookup on macOS ([#2](https://github.com/shyiko/kubesec/issues/2))
+- `gpg` lookup on macOS ([#2](https://github.com/willyguggenheim/kubesec/issues/2))
 
 ## 0.1.0 - 2017-08-11
 
-[0.9.2]: https://github.com/shyiko/kubesec/compare/0.9.1...0.9.2
-[0.9.1]: https://github.com/shyiko/kubesec/compare/0.9.0...0.9.1
-[0.9.0]: https://github.com/shyiko/kubesec/compare/0.8.0...0.9.0
-[0.8.0]: https://github.com/shyiko/kubesec/compare/0.7.0...0.8.0
-[0.7.0]: https://github.com/shyiko/kubesec/compare/0.6.2...0.7.0
-[0.6.2]: https://github.com/shyiko/kubesec/compare/0.6.1...0.6.2
-[0.6.1]: https://github.com/shyiko/kubesec/compare/0.6.0...0.6.1
-[0.6.0]: https://github.com/shyiko/kubesec/compare/0.5.0...0.6.0
-[0.5.0]: https://github.com/shyiko/kubesec/compare/0.4.2...0.5.0
-[0.4.2]: https://github.com/shyiko/kubesec/compare/0.4.1...0.4.2
-[0.4.1]: https://github.com/shyiko/kubesec/compare/0.4.0...0.4.1
-[0.4.0]: https://github.com/shyiko/kubesec/compare/0.3.1...0.4.0
-[0.3.1]: https://github.com/shyiko/kubesec/compare/0.3.0...0.3.1
-[0.3.0]: https://github.com/shyiko/kubesec/compare/0.2.0...0.3.0
-[0.2.0]: https://github.com/shyiko/kubesec/compare/0.1.1...0.2.0
-[0.1.1]: https://github.com/shyiko/kubesec/compare/0.1.0...0.1.1
+[0.9.2]: https://github.com/willyguggenheim/kubesec/compare/0.9.1...0.9.2
+[0.9.1]: https://github.com/willyguggenheim/kubesec/compare/0.9.0...0.9.1
+[0.9.0]: https://github.com/willyguggenheim/kubesec/compare/0.8.0...0.9.0
+[0.8.0]: https://github.com/willyguggenheim/kubesec/compare/0.7.0...0.8.0
+[0.7.0]: https://github.com/willyguggenheim/kubesec/compare/0.6.2...0.7.0
+[0.6.2]: https://github.com/willyguggenheim/kubesec/compare/0.6.1...0.6.2
+[0.6.1]: https://github.com/willyguggenheim/kubesec/compare/0.6.0...0.6.1
+[0.6.0]: https://github.com/willyguggenheim/kubesec/compare/0.5.0...0.6.0
+[0.5.0]: https://github.com/willyguggenheim/kubesec/compare/0.4.2...0.5.0
+[0.4.2]: https://github.com/willyguggenheim/kubesec/compare/0.4.1...0.4.2
+[0.4.1]: https://github.com/willyguggenheim/kubesec/compare/0.4.0...0.4.1
+[0.4.0]: https://github.com/willyguggenheim/kubesec/compare/0.3.1...0.4.0
+[0.3.1]: https://github.com/willyguggenheim/kubesec/compare/0.3.0...0.3.1
+[0.3.0]: https://github.com/willyguggenheim/kubesec/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/willyguggenheim/kubesec/compare/0.1.1...0.2.0
+[0.1.1]: https://github.com/willyguggenheim/kubesec/compare/0.1.0...0.1.1
