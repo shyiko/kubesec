@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	complete.LastArgBreaks = `"'@><=;|&(:`
+	complete.LastArgBreaks := `"'@><=;|&(:`
 }
 
 type Completion struct{}
