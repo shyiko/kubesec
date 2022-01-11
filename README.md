@@ -58,6 +58,14 @@ brew install shyiko/kubesec/kubesec --with-short-name # install as "ksec"
 
 > `brew install shyiko/kubesec/kubesec` is equivalent to `brew tap shyiko/kubesec && brew install kubesec`.
 
+#### ... on Monterey
+
+```
+GO111MODULE="on" go install github.com/willyguggenheim/kubesec@latest
+chmod a+x $GOPATH/bin/kubesec
+mv $GOPATH/bin/kubesec /usr/local/bin/
+```
+
 #### Linux
 
 ```sh
